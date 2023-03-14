@@ -36,6 +36,16 @@ public readonly struct Entity : IEquatable<Entity>, IComparable<Entity>
     }
 
     /// <summary>
+    ///     Initializes a new instance of the <see cref="Entity"/> struct.
+    /// </summary>
+    /// <param name="id">Its unique id.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Entity(int id)
+    {
+        Id = id;
+    }
+
+    /// <summary>
     ///     Checks the <see cref="Entity"/> for equality with another one.
     /// </summary>
     /// <param name="other">The other <see cref="Entity"/>.</param>
