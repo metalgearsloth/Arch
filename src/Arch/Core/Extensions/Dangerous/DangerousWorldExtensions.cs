@@ -22,6 +22,8 @@ public static class DangerousWorldExtensions
             world.Size += archetype.Entities;
             world.Capacity += archetype.EntitiesPerChunk * archetype.Size;
         }
+
+        world.ArchetypesAdded(archetypes.AsSpan());
     }
 
     /// <summary>

@@ -1,5 +1,4 @@
 using Arch.Core.Extensions.Internal;
-using CommunityToolkit.HighPerformance;
 
 namespace Arch.Core;
 
@@ -112,7 +111,7 @@ public ref struct QueryArchetypeEnumerator
         while (_archetypes.MoveNext())
         {
             var archetype = _archetypes.Current;
-            if (archetype.Entities > 0 && _query.Valid(archetype.BitSet))
+            if (archetype.Entities > 0)
             {
                 return true;
             }

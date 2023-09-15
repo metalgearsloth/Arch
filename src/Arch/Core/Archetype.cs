@@ -1,5 +1,4 @@
 using System.Buffers;
-using Arch.Core.Extensions;
 using Arch.Core.Extensions.Internal;
 using Arch.Core.Utils;
 using Arch.LowLevel.Jagged;
@@ -240,6 +239,11 @@ public sealed partial class Archetype
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal set;
     }
+
+    /// <summary>
+    ///     Archetype matches in queries including this archetype.
+    /// </summary>
+    internal PooledList<PooledList<Archetype>> QueryMatches { get; } = new();
 
     /// <summary>
     ///     Adds an <see cref="Arch.Core.Entity"/> to the <see cref="Archetype"/> and offloads it to a <see cref="Chunk"/>.

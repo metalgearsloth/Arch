@@ -590,6 +590,7 @@ public partial class World
 
         GroupToArchetype[hash] = archetype;
         Archetypes.Add(archetype);
+        ArchetypeAdded(archetype);
 
         // Archetypes always allocate one single chunk upon construction
         Capacity += archetype.EntitiesPerChunk;
@@ -1526,6 +1527,35 @@ public partial class World
         }
 
         return cmps;
+    }
+
+    internal void ArchetypeAdded(Archetype archetype)
+    {
+        foreach (var query in QueryCache.Values)
+        {
+            if (query.Valid(archetype.BitSet))
+            {
+                query.Matches.Add(archetype);
+                archetype.QueryMatches.Add(query.Matches);
+            }
+        }
+    }
+
+
+    internal void ArchetypesAdded(Span<Archetype> archetypes)
+    {
+        foreach (var archetype in archetypes)
+        {
+            ArchetypeAdded(archetype);
+        }
+    }
+
+    internal void ArchetypeRemoved(Archetype archetype)
+    {
+        foreach (var matches in archetype.QueryMatches)
+        {
+            matches.Remove(archetype);
+        }
     }
 }
 
