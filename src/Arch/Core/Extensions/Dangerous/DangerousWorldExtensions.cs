@@ -1,4 +1,5 @@
 using Arch.LowLevel.Jagged;
+using CommunityToolkit.HighPerformance;
 
 namespace Arch.Core.Extensions.Dangerous;
 
