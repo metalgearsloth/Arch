@@ -180,6 +180,8 @@ public sealed class ChunkIterationJob<T> : IJob where T : IChunkJob
     /// </summary>
     public void Execute()
     {
+        ref var chunk = ref Chunks[Start];
+
         for (var chunkIndex = 0; chunkIndex < Size; chunkIndex++)
         {
             ref var currentChunk = ref Unsafe.Add(ref chunk, chunkIndex);

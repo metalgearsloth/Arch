@@ -172,11 +172,6 @@ public sealed partial class Archetype
     }
 
     /// <summary>
-    ///     A bitset representation of the <see cref="Types"/> array for fast lookups and queries.
-    /// </summary>
-    public BitSet BitSet { get; }
-
-    /// <summary>
     ///     The number of entities that are stored per <see cref="Chunk"/>.
     /// </summary>
     public int EntitiesPerChunk { get; }

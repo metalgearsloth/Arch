@@ -60,7 +60,7 @@ public struct Signature : IEquatable<Signature>
     public Span<ComponentType> Components
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => MemoryMarshal.CreateSpan(ref ComponentsArray.DangerousGetReferenceAt(0), Count);
+        get => MemoryMarshal.CreateSpan(ref ComponentsArray[0], Count);
     }
 
     /// <summary>
