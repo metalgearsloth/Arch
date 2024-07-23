@@ -3,7 +3,7 @@
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <LangVersion>latest</LangVersion>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFrameworks>net8.0; net7.0; net6.0; netstandard2.1</TargetFrameworks>
 
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
@@ -14,11 +14,16 @@
 
     <PackageId>Arch</PackageId>
     <Title>Arch</Title>
-    <Version>1.2.7.1-alpha</Version>
+    <Version>1.2.8.2-alpha</Version>
     <Authors>genaray</Authors>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Description>A high performance c# net.6 and net.7 archetype based ECS ( Entity component system ).</Description>
-    <PackageReleaseNotes>Updated LowLevel which fixes bugs. </PackageReleaseNotes>
+    <PackageReleaseNotes>Updated CommunityToolkit, increases speed slightly. 
+Fixed some DangerousUtilities. 
+Refactored adding of entities to be faster. 
+Introduced Signature for improved performance. 
+Added MemoryMarshal.CreateSpan in some places for improved performance.
+Introduced breaking changes by renaming Group to Component and several other small changes. </PackageReleaseNotes>
     <PackageTags>c#;.net;.net6;.net7;ecs;game;entity;gamedev; game-development; game-engine; entity-component-system;stride;unity;godot;</PackageTags>
 
     <PackageProjectUrl>https://github.com/genaray/Arch</PackageProjectUrl>
@@ -89,11 +94,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Arch.LowLevel" Version="1.1.0" />
+    <PackageReference Include="Arch.LowLevel" Version="1.1.1" />
     <PackageReference Include="Collections.Pooled" Version="2.0.0-preview.27" />
-    <PackageReference Include="CommunityToolkit.HighPerformance" Version="7.1.2" />
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.2" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.0" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
-    <PackageReference Include="ZeroAllocJobScheduler" Version="1.0.1" />
+    <PackageReference Include="ZeroAllocJobScheduler" Version="1.1.2" />
   </ItemGroup>
 
 </Project>

@@ -14,13 +14,14 @@ namespace Arch.Core;
 [SkipLocalsInit]  // Really a speed improvements? The benchmark only showed a slight improvement
 public partial struct Chunk
 {
+
     /// <summary>
     ///     Initializes a new instance of the <see cref="Chunk"/> struct.
     ///     Automatically creates a lookup array for quick access to internal components.
     /// </summary>
     /// <param name="capacity">How many entities of the respective component structure fit into this <see cref="Chunk"/>.</param>
     /// <param name="types">The respective component structure of all entities in this <see cref="Chunk"/>.</param>
-    internal Chunk(int capacity, params ComponentType[] types)
+    internal Chunk(int capacity, Span<ComponentType> types)
         : this(capacity, types.ToLookupArray(), types) { }
 
     /// <summary>
@@ -29,7 +30,7 @@ public partial struct Chunk
     /// <param name="capacity">How many entities of the respective component structure fit into this <see cref="Chunk"/>.</param>
     /// <param name="componentIdToArrayIndex">A lookup array which maps the component id to the array index of the component array.</param>
     /// <param name="types">The respective component structure of all entities in this <see cref="Chunk"/>.</param>
-    internal Chunk(int capacity, int[] componentIdToArrayIndex, params ComponentType[] types)
+    internal Chunk(int capacity, int[] componentIdToArrayIndex, Span<ComponentType> types)
     {
         // Calculate capacity and init arrays.
         Size = 0;
@@ -224,6 +225,8 @@ public partial struct Chunk
     /// </summary>
     /// <typeparam name="T">The componen type.</typeparam>
     /// <returns>The index in the <see cref="Components"/> array.</returns>
+    [SkipLocalsInit]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [Pure]
     private int Index<T>()
     {
@@ -237,12 +240,15 @@ public partial struct Chunk
     /// </summary>
     /// <typeparam name="T">The component type.</typeparam>
     /// <returns>The array.</returns>
+    [SkipLocalsInit]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [Pure]
     public T[] GetArray<T>()
     {
         var index = Index<T>();
         Debug.Assert(index != -1 && index < Components.Length, $"Index is out of bounds, component {typeof(T)} with id {index} does not exist in this chunk.");
-        ref var array = ref Components[index];
+
+        var array = Components.DangerousGetReferenceAt(index);
         return Unsafe.As<T[]>(array);
     }
 
@@ -252,10 +258,13 @@ public partial struct Chunk
     /// </summary>
     /// <typeparam name="T">The component type.</typeparam>
     /// <returns>The array <see cref="Span{T}"/>.</returns>
+    [SkipLocalsInit]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [Pure]
     public Span<T> GetSpan<T>()
     {
-        return new Span<T>(GetArray<T>());
+        var array = GetArray<T>();
+        return MemoryMarshal.CreateSpan(ref array[0], array.Length);
     }
 
     /// <summary>
@@ -263,6 +272,8 @@ public partial struct Chunk
     /// </summary>
     /// <typeparam name="T">The component type.</typeparam>
     /// <returns>A reference to the first element.</returns>
+    [SkipLocalsInit]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [Pure]
     public ref T GetFirst<T>()
     {
@@ -272,7 +283,6 @@ public partial struct Chunk
 
 public partial struct Chunk
 {
-
     /// <summary>
     ///     Sets or replaces a component for an index in the chunk.
     ///     This won't fire an event for <see cref="ComponentSetHandler{T}"/>.

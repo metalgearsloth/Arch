@@ -118,7 +118,7 @@ public sealed partial class Archetype
     /// <summary>
     ///     The minimum size of a regular L1 cache.
     /// </summary>
-    internal const int BaseSize = 16000; // 16KB Chunk size
+    internal const int BaseSize = 16_384; // 16KB Chunk size
 
     /// <summary>
     ///     A lookup array that maps the component id to an index within the component array of a <see cref="Chunk"/> to quickly find the correct array for the component type.
@@ -129,22 +129,22 @@ public sealed partial class Archetype
     /// <summary>
     ///     Initializes a new instance of the <see cref="Archetype"/> class by a group of components.
     /// </summary>
-    /// <param name="types">The component structure of the <see cref="Arch.Core.Entity"/>'s that can be stored in this <see cref="Archetype"/>.</param>
-    internal Archetype(ComponentType[] types)
+    /// <param name="signature">The component structure of the <see cref="Arch.Core.Entity"/>'s that can be stored in this <see cref="Archetype"/>.</param>
+    internal Archetype(Signature signature)
     {
-        Types = types;
+        Types = signature;
 
         // Calculations
-        ChunkSizeInBytes = MinimumRequiredChunkSize(types);
-        EntitiesPerChunk = CalculateEntitiesPerChunk(types);
+        ChunkSizeInBytes = MinimumRequiredChunkSize(signature);
+        EntitiesPerChunk = CalculateEntitiesPerChunk(signature);
 
         // The bitmask/set
-        BitSet = types.ToBitSet();
-        _componentIdToArrayIndex = types.ToLookupArray();
+        BitSet = signature;
+        _componentIdToArrayIndex = signature.Components.ToLookupArray();
 
         // Setup arrays and mappings
         Chunks = ArrayPool<Chunk>.Shared.Rent(1);
-        Chunks[0] = new Chunk(EntitiesPerChunk, _componentIdToArrayIndex, types);
+        Chunks[0] = new Chunk(EntitiesPerChunk, _componentIdToArrayIndex, signature);
 
         ChunkCount = 1;
         ChunkCapacity = 1;
@@ -157,6 +157,11 @@ public sealed partial class Archetype
     ///     The component types that the <see cref="Arch.Core.Entity"/>'s stored here have.
     /// </summary>
     public ComponentType[] Types { get; }
+
+    /// <summary>
+    ///     A bitset representation of the <see cref="Types"/> array for fast lookups and queries.
+    /// </summary>
+    public BitSet BitSet { [MethodImpl(MethodImplOptions.AggressiveInlining)] get; }
 
     /// <summary>
     ///     The lookup array used by this <see cref="Archetype"/>, is being passed to all its <see cref="Chunks"/> to save memory.
@@ -254,12 +259,8 @@ public sealed partial class Archetype
     /// <returns>True if a new <see cref="Chunk"/> was allocated, otherwhise false.</returns>
     internal bool Add(Entity entity, out Slot slot)
     {
-        // Increase size by one if the current chunk is full and theres capcity to prevent new chunk allocation.
-        ref var lastChunk = ref LastChunk;
-        ChunkCount = lastChunk.Size == lastChunk.Capacity && ChunkCount < ChunkCapacity ? ChunkCount + 1 : ChunkCount;
-
         // Fill chunk
-        lastChunk = ref LastChunk;
+        ref var lastChunk = ref LastChunk;
         if (lastChunk.Size != lastChunk.Capacity)
         {
             slot.Index = lastChunk.Add(entity);
@@ -269,7 +270,20 @@ public sealed partial class Archetype
             return false;
         }
 
-        // Create new chunk
+        // Chunk full? Use next allocated chunk
+        if (ChunkCount < ChunkCapacity )
+        {
+            ChunkCount++;
+            lastChunk = ref LastChunk;
+
+            slot.Index = lastChunk.Add(entity);
+            slot.ChunkIndex = ChunkCount - 1;
+            EntityCount++;
+
+            return false;
+        }
+
+        // No more free allocated chunks? Create new chunk
         var newChunk = new Chunk(EntitiesPerChunk, _componentIdToArrayIndex, Types);
         slot.Index = newChunk.Add(entity);
         EntityCount++;
@@ -493,7 +507,7 @@ public sealed unsafe partial class Archetype
     /// </summary>
     /// <param name="types">The component structure of the <see cref="Arch.Core.Entity"/>'s.</param>
     /// <returns>The amount of <see cref="Chunk"/>'s required.</returns>
-    public int MinimumRequiredChunkSize(ComponentType[] types)
+    public int MinimumRequiredChunkSize(Span<ComponentType> types)
     {
         var minimumEntities = (sizeof(Entity) + types.ToByteSize()) * MinimumAmountOfEntitiesPerChunk;
         return (int)Math.Ceiling((float)minimumEntities / BaseSize) * BaseSize;
@@ -504,7 +518,7 @@ public sealed unsafe partial class Archetype
     /// </summary>
     /// <param name="types">The component structure of the <see cref="Arch.Core.Entity"/>'s.</param>
     /// <returns>The amount of <see cref="Arch.Core.Entity"/>'s.</returns>
-    public int CalculateEntitiesPerChunk(ComponentType[] types)
+    public int CalculateEntitiesPerChunk(Span<ComponentType> types)
     {
         return ChunkSizeInBytes / (sizeof(Entity) + types.ToByteSize());
     }
@@ -516,6 +530,11 @@ public sealed unsafe partial class Archetype
     /// <param name="newCapacity">The amount of <see cref="Chunk"/>'s required, in total.</param>
     private void EnsureChunkCapacity(int newCapacity)
     {
+        if (ChunkCapacity >= newCapacity)
+        {
+            return;
+        }
+
         // Increase chunk array size
         var newChunks = ArrayPool<Chunk>.Shared.Rent(newCapacity);
         Array.Copy(Chunks, newChunks, ChunkCapacity);
@@ -524,23 +543,16 @@ public sealed unsafe partial class Archetype
         ChunkCapacity = newCapacity;
     }
 
-    /// TODO : Currently this only ensures additional entity capacity, instead it should take the whole capacity in count.
     /// <summary>
-    ///     Ensures the capacity of the <see cref="Chunks"/> array.
-    ///     Increases the <see cref="ChunkCapacity"/>.
+    ///     Ensures the capacity of the <see cref="Chunks"/> array for a certain amount of <see cref="Entity"/>s.
+    ///     Increases the <see cref="ChunkCapacity"/> to fit all entities within it.
     /// </summary>
-    /// <param name="newCapacity">The amount of <see cref="Chunk"/>'s required, in total.</param>
+    /// <param name="newCapacity">The amount of <see cref="Entity"/>'s required, in total.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void EnsureEntityCapacity(int newCapacity)
     {
-        // TODO: LastChunk updated sich nicht wenn von einem archetype weniger entities in einen anderen kopier werden als vorher drin waren.
-        // TODO: Dadurch bleibt z.B. ein Chunk am ende des Archetypes frei, wodurch beim entfernen eines entities wieder nen index -1 auftritt und ne exception
-        // TODO: LastChunk MUSS sich irgendwie updaten bei so nem Kopier quatsch? Glaube in dieser Methode machts keinen Sinn? Oder vllt doch?
-
         // Calculate amount of required chunks.
-        //var freeSpots = EntityCapacity - EntityCount;
-        //var neededSpots = newCapacity - freeSpots;
         var neededChunks = (int)Math.Ceiling((float)newCapacity / EntitiesPerChunk);
-
         if (ChunkCapacity-ChunkCount > neededChunks)
         {
             return;
@@ -555,12 +567,6 @@ public sealed unsafe partial class Archetype
             var newChunk = new Chunk(EntitiesPerChunk, _componentIdToArrayIndex, Types);
             Chunks[previousCapacity + index] = newChunk;
         }
-
-        // If last chunk was full, add.
-        /*if (freeSpots == 0)
-        {
-            ChunkCount++;
-        }*/
     }
 
     /// <summary>

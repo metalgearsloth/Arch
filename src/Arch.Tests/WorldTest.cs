@@ -278,6 +278,10 @@ public sealed partial class WorldTest
         That(world.Capacity, Is.EqualTo(archetype.EntitiesPerChunk));
         That(archetype.ChunkCount, Is.EqualTo(1));
         That(archetype.ChunkCapacity, Is.EqualTo(1));
+
+        // Recycled ids must be trimmed too so that the newest created entity is not out of bounds!
+        world.RecycledIds.TryPeek(out var entityId);
+        That(entityId.Id, Is.EqualTo(world.Capacity - 1));
     }
 
     /// <summary>
@@ -510,6 +514,39 @@ public partial class WorldTest
         world.Remove<Ai>(in withAIQueryDesc);
         That(world.CountEntities(in withAIQueryDesc), Is.EqualTo(0));
         That(world.CountEntities(in withoutAIQueryDesc), Is.EqualTo(1000));
+    }
+
+    /// <summary>
+    ///     Checks if the world fills an empty archetype with left capacity correctly
+    /// </summary>
+    [Test]
+    public void FillEmptyArchetypeWithCapacityLeft()
+    {
+        // Create entities with a single archetype
+        for (var i = 0; i < 100; i++)
+        {
+            _world.Create(new Transform());
+        }
+
+        // Create entities with a duplex archetype
+        var archetype = _world.Archetypes[0];
+        var entityCapacity = archetype.EntityCapacity;
+        for (var i = 0; i <= entityCapacity; i++)
+        {
+            _world.Create(new Transform(), new Rotation());
+        }
+
+        // Try move entities from duplex archetype to single archetype
+        _world.Remove<Rotation>(new QueryDescription().WithAll<Transform, Rotation>());
+
+        // Just a big value to ensure it goes beyond the original capacity
+        // Capacity should grow properly
+        entityCapacity = archetype.EntityCapacity;
+        for (var i = 0; i <= entityCapacity; i++)
+        {
+            // Create entities with a duplex archetype
+            DoesNotThrow(() => _world.Create(new Transform(), new Rotation()), "Overflow at {0}", i);
+        }
     }
 }
 

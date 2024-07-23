@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Arch.Core;
@@ -100,7 +101,7 @@ internal class EntityInfoStorage
     /// </summary>
     internal EntityInfoStorage()
     {
-        var cpuL1CacheSize = 16_000;
+        var cpuL1CacheSize = 16_384;
 
         Versions = new JaggedArray<int>(
             cpuL1CacheSize / Unsafe.SizeOf<int>(),
@@ -219,7 +220,6 @@ internal class EntityInfoStorage
         EntitySlots[id] = new EntitySlot(archetype,slot);
     }
 
-    /// TODO : Find a cleaner way to break? One that does NOT require a branching?
     /// <summary>
     ///     Updates the <see cref="EntityInfo"/> and all entities that moved/shifted between the archetypes.
     ///     <remarks>Use and modify with caution, one small logical issue and the whole framework stops working.</remarks>
@@ -231,7 +231,6 @@ internal class EntityInfoStorage
     public void Shift(Archetype archetype, Slot archetypeSlot, Archetype newArchetype, Slot newArchetypeSlot)
     {
         // Update the entityInfo of all copied entities.
-        //for (var chunkIndex = archetypeSlot.ChunkIndex; chunkIndex >= 0; --chunkIndex)
         for (var chunkIndex = 0; chunkIndex <= archetypeSlot.ChunkIndex; chunkIndex++)
         {
             // Get data
@@ -242,7 +241,6 @@ internal class EntityInfoStorage
             var isStart = chunkIndex == archetypeSlot.ChunkIndex;
             var upper = isStart ? archetypeSlot.Index : chunk.Size-1;
 
-            //for (var index = upper; index >= 0; --index)
             for(var index = 0; index <= upper; index++)
             {
                 var entity = Unsafe.Add(ref entityFirstElement, index);

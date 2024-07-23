@@ -393,7 +393,7 @@ public sealed class BitSet
     /// <returns>The hash.</returns>
     public Span<uint> AsSpan()
     {
-        var max = (_highestBit / sizeof(uint) / _padding) + 1;
+        var max = (_highestBit / (BitSize + 1)) + 1;
         return _bits.AsSpan(0, max);
     }
 

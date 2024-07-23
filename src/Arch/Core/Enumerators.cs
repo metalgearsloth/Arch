@@ -1,4 +1,6 @@
 using Arch.Core.Extensions.Internal;
+using Arch.Core.Utils;
+using CommunityToolkit.HighPerformance;
 
 namespace Arch.Core;
 

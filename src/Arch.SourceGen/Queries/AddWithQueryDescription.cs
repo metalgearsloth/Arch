@@ -50,7 +50,7 @@ public static class AddWithQueryDescription
             public void Add<{{generics}}>(in QueryDescription queryDescription, {{parameters}})
             {
                 // BitSet to stack/span bitset, size big enough to contain ALL registered components.
-                Span<uint> stack = stackalloc uint[BitSet.RequiredLength(ComponentRegistry.Size)];
+                Span<uint> stack = stackalloc uint[BitSet.RequiredLength(ComponentRegistry.Size + {{amount + 1}})];
 
                 var query = Query(in queryDescription);
                 foreach (var archetype in query.GetArchetypeIterator())
@@ -79,12 +79,17 @@ public static class AddWithQueryDescription
                     EntityInfo.Shift(archetype, archetypeSlot, newArchetype, newArchetypeLastSlot);
 
                     // Copy, set and clear
+                    var oldCapacity = newArchetype.EntityCapacity;
                     Archetype.Copy(archetype, newArchetype);
                     var lastSlot = newArchetype.LastSlot;
                     newArchetype.SetRange(in lastSlot, in newArchetypeLastSlot, {{inParameters}});
-                    {{addEvents}}
                     archetype.Clear();
+
+                    Capacity += newArchetype.EntityCapacity - oldCapacity;
+                    {{addEvents}}
                 }
+
+                EntityInfo.EnsureCapacity(Capacity);
             }
             """;
 

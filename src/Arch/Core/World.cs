@@ -1,9 +1,10 @@
 using System.Diagnostics.Contracts;
 using System.Threading;
+using Arch.Core.Extensions;
 using Arch.Core.Extensions.Internal;
 using Arch.Core.Utils;
 using Collections.Pooled;
-using JobScheduler;
+using Schedulers;
 using Component = Arch.Core.Utils.Component;
 using ArchArrayExtensions = Arch.Core.Extensions.Internal.ArrayExtensions;
 
@@ -81,6 +82,11 @@ public partial class World
     ///     Tracks how many <see cref="World"/>s exists.
     /// </summary>
     public static int WorldSize { get; [MethodImpl(MethodImplOptions.AggressiveInlining)] private set; }
+
+    /// <summary>
+    ///     The shared static <see cref="JobScheduler"/> used for Multithreading.
+    /// </summary>
+    public static JobScheduler? SharedJobScheduler { get; set; }
 
     /// <summary>
     ///     Creates a <see cref="World"/> instance.
@@ -224,20 +230,18 @@ public partial class World : IDisposable
     /// </summary>
     internal PooledDictionary<QueryDescription, Query> QueryCache { get; set; }
 
-    private ReaderWriterLockSlim _queryCacheLock = new();
-
     /// <summary>
     ///     Reserves space for a certain number of <see cref="Entity"/>s of a given component structure/<see cref="Archetype"/>.
     /// </summary>
     /// <remarks>
     ///     Causes a structural change.
     /// </remarks>
-    /// <param name="types">The component structure/<see cref="Archetype"/>.</param>
+    /// <param name="signature">The component structure/<see cref="Archetype"/>.</param>
     /// <param name="amount">The amount of <see cref="Entity"/>s to reserve space for.</param>
     [StructuralChange]
-    public void Reserve(Span<ComponentType> types, int amount)
+    public void Reserve(in Signature signature, int amount)
     {
-        var archetype = GetOrCreate(types);
+        var archetype = GetOrCreate(signature);
         archetype.Reserve(amount);
 
         var requiredCapacity = Capacity + amount;
@@ -257,9 +261,10 @@ public partial class World : IDisposable
     [StructuralChange]
     public Entity Create(params ComponentType[] types)
     {
-        return Create(types.AsSpan());
+        return Create((Signature)types);
     }
 
+    // TODO: Find cleaner way to resize the EntityInfo? Let archetype.Create return an amount which is added to Capacity or whatever?
     /// <summary>
     ///     Creates a new <see cref="Entity"/> using its given component structure/<see cref="Archetype"/>.
     ///     Might resize its target <see cref="Archetype"/> and allocate new space if its full.
@@ -270,7 +275,7 @@ public partial class World : IDisposable
     /// <param name="types">Its component structure/<see cref="Archetype"/>.</param>
     /// <returns></returns>
     [StructuralChange]
-    public Entity Create(Span<ComponentType> types)
+    public Entity Create(in Signature types)
     {
         // Recycle id or increase
         var recycle = RecycledIds.TryDequeue(out var recycledId);
@@ -280,7 +285,7 @@ public partial class World : IDisposable
         var entity = new Entity(recycled.Id, Id);
 
         // Add to archetype & mapping
-        var archetype = GetOrCreate(types);
+        var archetype = GetOrCreate(in types);
         var createdChunk = archetype.Add(entity, out var slot);
 
         // Resize map & Array to fit all potential new entities
@@ -290,10 +295,18 @@ public partial class World : IDisposable
             EntityInfo.EnsureCapacity(Capacity);
         }
 
-        // Map
+        // Add entity to info storage
         EntityInfo.Add(entity.Id, recycled.Version, archetype, slot);
         Size++;
         OnEntityCreated(entity);
+
+#if EVENTS
+        foreach (ref var type in types)
+        {
+            OnComponentAdded(entity, type);
+        }
+#endif
+
         return entity;
     }
 
@@ -338,6 +351,15 @@ public partial class World : IDisposable
     [StructuralChange]
     public void Destroy(Entity entity)
     {
+        #if EVENTS
+        // Raise the OnComponentRemoved event for each component on the entity.
+        var arch = GetArchetype(entity);
+        foreach (var compType in arch.Types)
+        {
+            OnComponentRemoved(entity, compType);
+        }
+        #endif
+
         OnEntityDestroyed(entity);
 
         // Remove from archetype
@@ -385,6 +407,10 @@ public partial class World : IDisposable
             archetype.TrimExcess();
             Capacity += archetype.ChunkCount * archetype.EntitiesPerChunk; // Since always one chunk always exists.
         }
+
+        // Traverse recycled ids and remove all that are higher than the current capacity.
+        // If we do not do this, a new entity might get a id higher than the entityinfo array which causes it to go out of bounds.
+        RecycledIds.RemoveWhere(entity => entity.Id >= Capacity);
     }
 
     /// <summary>
@@ -554,27 +580,28 @@ public partial class World : IDisposable
 public partial class World
 {
     /// <summary>
-    ///     Maps a <see cref="Group"/> hash to its <see cref="Archetype"/>.
+    ///     Maps a <see cref="Components"/> hash to its <see cref="Archetype"/>.
     /// </summary>
     internal PooledDictionary<int, Archetype> GroupToArchetype { get; set; }
 
     /// <summary>
     ///     Returns an <see cref="Archetype"/> based on its components. If it does not exist, it will be created.
     /// </summary>
-    /// <param name="types">Its <see cref="ComponentType"/>s.</param>
+    /// <param name="signature">Its <see cref="ComponentType"/>s.</param>
     /// <returns>An existing or new <see cref="Archetype"/>.</returns>
-    internal Archetype GetOrCreate(Span<ComponentType> types)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal Archetype GetOrCreate(in Signature signature)
     {
-        if (TryGetArchetype(types, out var archetype))
+        var hashCode = signature.GetHashCode();
+        if (TryGetArchetype(hashCode, out var archetype))
         {
             return archetype;
         }
 
         // Create archetype
-        archetype = new Archetype(types.ToArray());
-        var hash = Component.GetHashCode(types);
+        archetype = new Archetype(signature);
 
-        GroupToArchetype[hash] = archetype;
+        GroupToArchetype[hashCode] = archetype;
         Archetypes.Add(archetype);
 
         // Archetypes always allocate one single chunk upon construction
@@ -599,40 +626,15 @@ public partial class World
     }
 
     /// <summary>
-    ///     Tries to find an <see cref="Archetype"/> by a <see cref="BitSet"/>.
+    ///     Tries to find an <see cref="Archetype"/> by a provided <see cref="Signature"/>.
     /// </summary>
-    /// <param name="bitset">A <see cref="BitSet"/> indicating the <see cref="Archetype"/> structure.</param>
+    /// <param name="signature">Its <see cref="Signature"/>.</param>
     /// <param name="archetype">The found <see cref="Archetype"/>.</param>
     /// <returns>True if found, otherwise false.</returns>
     [Pure]
-    public bool TryGetArchetype(BitSet bitset, [MaybeNullWhen(false)] out Archetype archetype)
+    public bool TryGetArchetype(in Signature signature, [MaybeNullWhen(false)] out Archetype archetype)
     {
-        return TryGetArchetype(bitset.GetHashCode(), out archetype);
-    }
-
-    /// <summary>
-    ///     Tries to find an <see cref="Archetype"/> by a <see cref="SpanBitSet"/>.
-    /// </summary>
-    /// <param name="bitset">A <see cref="SpanBitSet"/> indicating the <see cref="Archetype"/> structure.</param>
-    /// <param name="archetype">The found <see cref="Archetype"/>.</param>
-    /// <returns>True if found, otherwise false.</returns>
-    [Pure]
-    public bool TryGetArchetype(SpanBitSet bitset, [MaybeNullWhen(false)] out Archetype archetype)
-    {
-        return TryGetArchetype(bitset.GetHashCode(), out archetype);
-    }
-
-    /// <summary>
-    ///     Tries to find an <see cref="Archetype"/> by the hash of its components.
-    /// </summary>
-    /// <param name="types">Its <see cref="ComponentType"/>s.</param>
-    /// <param name="archetype">The found <see cref="Archetype"/>.</param>
-    /// <returns>True if found, otherwise false.</returns>
-    [Pure]
-    public bool TryGetArchetype(Span<ComponentType> types, [MaybeNullWhen(false)] out Archetype archetype)
-    {
-        var hash = Component.GetHashCode(types);
-        return TryGetArchetype(hash, out archetype);
+        return TryGetArchetype(signature.GetHashCode(), out archetype);
     }
 
     /// <summary>
@@ -755,6 +757,16 @@ public partial class World
                 foreach (var index in chunk)
                 {
                     var entity = Unsafe.Add(ref entityFirstElement, index);
+
+                    #if EVENTS
+                    // Raise the OnComponentRemoved event for each component on the entity.
+                    var arch = GetArchetype(entity);
+                    foreach (var compType in arch.Types)
+                    {
+                        OnComponentRemoved(entity, compType);
+                    }
+                    #endif
+
                     OnEntityDestroyed(entity);
 
                     var version = EntityInfo.GetVersion(entity.Id);
@@ -837,14 +849,19 @@ public partial class World
             Slot.Shift(ref newArchetypeLastSlot, newArchetype.EntitiesPerChunk);
             EntityInfo.Shift(archetype, archetypeSlot, newArchetype, newArchetypeLastSlot);
 
-            // Copy, set and clear
+            // Copy, Set and clear
+            var oldCapacity = newArchetype.EntityCapacity;
             Archetype.Copy(archetype, newArchetype);
             var lastSlot = newArchetype.LastSlot;
             newArchetype.SetRange(in lastSlot, in newArchetypeLastSlot, in component);
             archetype.Clear();
 
+            // Adjust capacity since the new archetype may have changed in size
+            Capacity += newArchetype.EntityCapacity - oldCapacity;
             OnComponentAdded<T>(newArchetype);
         }
+
+        EntityInfo.EnsureCapacity(Capacity);
     }
 
     /// <summary>
@@ -890,9 +907,16 @@ public partial class World
             Slot.Shift(ref newArchetypeLastSlot, newArchetype.EntitiesPerChunk);
             EntityInfo.Shift(archetype, archetypeSlot, newArchetype, newArchetypeLastSlot);
 
+            // Copy and track capacity difference
+            var oldCapacity = newArchetype.EntityCapacity;
             Archetype.Copy(archetype, newArchetype);
             archetype.Clear();
+
+            // Adjust capacity since the new archetype may have changed in size
+            Capacity += newArchetype.EntityCapacity - oldCapacity;
         }
+
+        EntityInfo.EnsureCapacity(Capacity);
     }
 }
 
@@ -1386,6 +1410,24 @@ public partial class World
     public bool IsAlive(Entity entity)
     {
         return EntityInfo.Has(entity.Id);
+    }
+
+    /// <summary>
+    ///     Checks if the <see cref="EntityReference"/> is alive and valid in this <see cref="World"/>.
+    /// </summary>
+    /// <param name="entityReference">The <see cref="EntityReference"/>.</param>
+    /// <returns>True if it exists and is alive, otherwise false.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Pure]
+    public bool IsAlive(EntityReference entityReference)
+    {
+        if (entityReference == EntityReference.Null)
+        {
+            return false;
+        }
+
+        var reference = Reference(entityReference.Entity);
+        return entityReference == reference;
     }
 
     /// <summary>

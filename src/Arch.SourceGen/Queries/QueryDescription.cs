@@ -22,7 +22,8 @@ public static class QueryDescriptionExtensions
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public ref QueryDescription WithAll<{{generics}}>()
             {
-               All = Group<{{generics}}>.Types;
+               All = Component<{{generics}}>.Signature;
+               _hashCode = -1;
                return ref this;
             }
             """;
@@ -51,7 +52,8 @@ public static class QueryDescriptionExtensions
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public ref QueryDescription WithAny<{{generics}}>()
             {
-               Any = Group<{{generics}}>.Types;
+               Any = Component<{{generics}}>.Signature;
+               _hashCode = -1;
                return ref this;
             }
             """;
@@ -80,7 +82,8 @@ public static class QueryDescriptionExtensions
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public ref QueryDescription WithNone<{{generics}}>()
             {
-               None = Group<{{generics}}>.Types;
+               None = Component<{{generics}}>.Signature;
+               _hashCode = -1;
                return ref this;
             }
             """;
@@ -109,7 +112,8 @@ public static class QueryDescriptionExtensions
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public ref QueryDescription WithExclusive<{{generics}}>()
             {
-               Exclusive = Group<{{generics}}>.Types;
+               Exclusive = Component<{{generics}}>.Signature;
+               _hashCode = -1;
                return ref this;
             }
             """;
