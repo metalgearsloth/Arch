@@ -33,6 +33,7 @@ public partial class Archetype
     /// <param name="archetype">The <see cref="Archetype"/>.</param>
     internal void AddAddEdge(int index, Archetype archetype)
     {
+        _addEdges.EnsureCapacity(index);
         _addEdges.Add(index, archetype);
     }
 
@@ -43,6 +44,7 @@ public partial class Archetype
     /// <param name="archetype">The <see cref="Archetype"/>.</param>
     internal void AddRemoveEdge(int index, Archetype archetype)
     {
+        _removeEdges.EnsureCapacity(index);
         _removeEdges.Add(index, archetype);
     }
 
