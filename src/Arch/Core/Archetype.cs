@@ -398,8 +398,7 @@ public sealed partial class Archetype
     /// <param name="entity">The <see cref="Arch.Core.Entity"/> that is added.</param>
     /// <param name="slot">The <see cref="Slot"/> in which it was deposited.</param>
     /// <returns>True if a new <see cref="Chunk"/> was allocated, otherwhise false.</returns>
-
-    internal bool Add(Entity entity, out Slot slot)
+    internal bool Add(EntityReference entity, out Slot slot)
     {
         // Storing stack variables to prevent multiple times acessing those fields.
         ref var lastChunk = ref LastChunk;
@@ -511,11 +510,10 @@ public sealed partial class Archetype
     /// </summary>
     /// <param name="slot">The <see cref="Slot"/>.</param>
     /// <returns>A reference to the <see cref="Arch.Core.Entity"/>.</returns>
-
-    internal ref Entity Entity(scoped ref Slot slot)
+    internal ref EntityReference Entity(scoped ref Slot slot)
     {
         ref var chunk = ref GetChunk(slot.ChunkIndex);
-        return ref chunk.Entity(slot.Index);
+        return ref chunk.EntityReference(slot.Index);
     }
 
     /// NOTE: Causes bounds check, any way to avoid that ?

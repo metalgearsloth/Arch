@@ -65,7 +65,7 @@ public static class StringBuilderChunkJobExtensions
 
                 public void Execute(ref Chunk chunk)
                 {
-                    ref var entityFirstElement = ref chunk.Entity(0);
+                    ref var entityFirstElement = ref chunk.EntityReference(0);
                     {{getFirstElement}}
 
                     foreach(var entityIndex in chunk)
@@ -146,7 +146,7 @@ public static class StringBuilderChunkJobExtensions
                 public void Execute(ref Chunk chunk)
                 {
                     var chunkSize = chunk.Size;
-                    ref var entityFirstElement = ref chunk.Entity(0);
+                    ref var entityFirstElement = ref chunk.EntityReference(0);
                     {{getFirstElement}}
 
                     foreach(var entityIndex in chunk)

@@ -246,7 +246,7 @@ internal class EntityInfoStorage
         {
             // Get data
             ref var chunk = ref archetype.GetChunk(chunkIndex);
-            ref var entityFirstElement = ref chunk.Entity(0);
+            ref var entityFirstElement = ref chunk.EntityReference(0);
 
             // Only move within the range, depening on which chunk we are at.
             var isStart = chunkIndex == archetypeSlot.ChunkIndex;
@@ -257,7 +257,7 @@ internal class EntityInfoStorage
                 var entity = Unsafe.Add(ref entityFirstElement, index);
 
                 // Update entity info
-                Move(entity.Id, newArchetype, newArchetypeSlot);
+                Move(entity.Entity.Id, newArchetype, newArchetypeSlot);
                 newArchetypeSlot++;
 
                 if (newArchetypeSlot.Index >= newArchetype.EntitiesPerChunk)

@@ -115,7 +115,7 @@ public static class StringBuilderQueryExtensions
                 var query = Query(in description);
                 foreach (ref var chunk in query)
                 {
-                    ref var entityFirstElement = ref chunk.Entity(0);
+                    ref var entityFirstElement = ref chunk.EntityReference(0);
                     {{getFirstElement}}
 
                     foreach(var entityIndex in chunk)

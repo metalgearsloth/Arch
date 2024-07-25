@@ -38,7 +38,7 @@ public partial struct Chunk
         Size = 0;
         Capacity = capacity;
 
-        Entities = new Entity[Capacity];
+        EntityReferences = new EntityReference[Capacity];
         Components = new Array[types.Length];
 
         // Init mapping.
@@ -50,12 +50,7 @@ public partial struct Chunk
         }
     }
 
-
-    /// <summary>
-    ///     The <see cref="Arch.Core.Entity"/>'s that are stored in this chunk.
-    ///     Can be accessed during the iteration.
-    /// </summary>
-    public readonly Entity[] Entities { [Pure]  get; }
+    public readonly EntityReference[] EntityReferences { [Pure] get; }
 
     /// <summary>
     ///     The component arrays in which the components of the <see cref="Arch.Core.Entity"/>'s are stored.
@@ -83,9 +78,9 @@ public partial struct Chunk
     ///     Inserts an entity into the <see cref="Chunk"/>.
     ///     This won't fire an event for <see cref="EntityCreatedHandler"/>.
     /// </summary>
-    /// <param name="entity">The <see cref="Arch.Core.Entity"/> that will be inserted.</param>
+    /// <param name="entity">The <see cref="Arch.Core.EntityReference"/> that will be inserted.</param>
     /// <returns>The index occupied by the <see cref="Arch.Core.Entity"/> in the chunk.</returns>
-    internal int Add(Entity entity)
+    internal int Add(EntityReference entity)
     {
         // Stack variable faster than accessing 3 times the Size field.
         var size = Size;
@@ -157,18 +152,13 @@ public partial struct Chunk
     public EntityComponents<T> GetRow<T>(int index)
     {
         var array = GetSpan<T>();
-        return new EntityComponents<T>(ref Entities[index], ref array[index]);
+        return new EntityComponents<T>(ref EntityReferences[index], ref array[index]);
     }
 
-    /// <summary>
-    ///     Returns an <see cref="Arch.Core.Entity"/> at the index.
-    /// </summary>
-    /// <param name="index">The index.</param>
-    /// <returns>A reference to the <see cref="Arch.Core.Entity"/>.</returns>
     [Pure]
-    public ref Entity Entity(int index)
+    public ref EntityReference EntityReference(int index)
     {
-        return ref Entities.DangerousGetReferenceAt(index);
+        return ref EntityReferences.DangerousGetReferenceAt(index);
     }
 
     /// <summary>
@@ -383,11 +373,11 @@ public partial struct Chunk
     internal static void Copy(ref Chunk source, int index, ref Chunk destination, int destinationIndex, int length)
     {
         // Arrays
-        var entities = source.Entities;
+        var entities = source.EntityReferences;
         var sourceComponents = source.Components;
 
         // Copy entities array
-        Array.Copy(entities, index, destination.Entities, destinationIndex, length);
+        Array.Copy(entities, index, destination.EntityReferences, destinationIndex, length);
 
         // Copy component arrays
         for (var i = 0; i < sourceComponents.Length; i++)
@@ -447,10 +437,10 @@ public partial struct Chunk
     {
         // Get last entity
         var lastIndex = chunk.Size - 1;
-        var lastEntity = chunk.Entity(lastIndex);
+        var lastEntity = chunk.EntityReference(lastIndex);
 
         // Replace index entity with the last entity from the other chunk
-        Entities[index] = lastEntity;
+        EntityReferences[index] = chunk.EntityReference(lastIndex);
         for (var i = 0; i < Components.Length; i++)
         {
             var sourceArray = chunk.Components[i];
@@ -459,6 +449,6 @@ public partial struct Chunk
         }
 
         chunk.Size--;
-        return lastEntity.Id;
+        return lastEntity.Entity.Id;
     }
 }

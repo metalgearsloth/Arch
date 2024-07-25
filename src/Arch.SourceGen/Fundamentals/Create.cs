@@ -38,10 +38,11 @@ public static class CreateExtensions
 
                 // Create new entity and put it to the back of the array
                 var entity = new Entity(recycled.Id, Id);
+                var entRef = new EntityReference(entity, recycled.Version);
 
                 // Add to archetype & mapping
                 var archetype = GetOrCreate(signature);
-                var createdChunk = archetype.Add(entity, out var slot);
+                var createdChunk = archetype.Add(entRef, out var slot);
 
                 archetype.Set<{{generics}}>(ref slot, {{inParameters}});
 

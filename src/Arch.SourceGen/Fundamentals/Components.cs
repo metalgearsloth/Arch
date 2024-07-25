@@ -103,22 +103,21 @@ public static class ReferencesExtensions
             {
 
             #if NETSTANDARD2_1 || NET6_0
-                public ReadOnlyRef<Entity> Entity;
+                public ReadOnlyRef<EntityReference> EntityReference;
                 {{refStructs}}
             #else
-                public ref readonly Entity Entity;
+                public ref readonly EntityReference EntityReference;
                 {{references}}
             #endif
 
                 [SkipLocalsInit]
-
-                public EntityComponents(ref Entity entity, {{parameters}}){
+                public EntityComponents(ref EntityReference entity, {{parameters}}){
 
             #if NETSTANDARD2_1 || NET6_0
-                Entity = new ReadOnlyRef<Entity>(in entity);
+                EntityReference = new ReadOnlyRef<Entity>(in entity);
                 {{assignRefStructs}}
             #else
-                Entity = ref entity;
+                EntityReference = ref entity;
                 {{assignRefs}}
             #endif
 

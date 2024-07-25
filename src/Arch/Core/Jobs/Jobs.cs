@@ -86,7 +86,7 @@ public struct ForEachJob : IChunkJob
 
     public readonly void Execute(ref Chunk chunk)
     {
-        ref var entityFirstElement = ref chunk.Entity(0);
+        ref var entityFirstElement = ref chunk.EntityReference(0);
         foreach(var entityIndex in chunk)
         {
             var entity = Unsafe.Add(ref entityFirstElement, entityIndex);
@@ -117,7 +117,7 @@ public struct IForEachJob<T> : IChunkJob where T : IForEach
 
     public void Execute(ref Chunk chunk)
     {
-        ref var entityFirstElement = ref chunk.Entity(0);
+        ref var entityFirstElement = ref chunk.EntityReference(0);
         foreach(var entityIndex in chunk)
         {
             var entity = Unsafe.Add(ref entityFirstElement, entityIndex);

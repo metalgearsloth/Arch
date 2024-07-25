@@ -51,8 +51,7 @@ public interface IForEach
     ///     Called on an <see cref="Entity"/> to execute logic on it.
     /// </summary>
     /// <param name="entity">The <see cref="Entity"/>.</param>
-
-    public void Update(Entity entity);
+    public void Update(EntityReference entity);
 }
 
 /// <summary>
@@ -60,7 +59,7 @@ public interface IForEach
 ///     provides a callback to execute logic on an <see cref="Entity"/>.
 /// </summary>
 /// <param name="entity">The <see cref="Entity"/>.</param>
-public delegate void ForEach(Entity entity);
+public delegate void ForEach(EntityReference entity);
 
 // Static world, create and destroy
 #region Static Create and Destroy
@@ -283,10 +282,11 @@ public partial class World : IDisposable
 
         // Create new entity and put it to the back of the array
         var entity = new Entity(recycled.Id, Id);
+        var entRef = new EntityReference(entity, recycled.Version);
 
         // Add to archetype & mapping
         var archetype = GetOrCreate(in types);
-        var createdChunk = archetype.Add(entity, out var slot);
+        var createdChunk = archetype.Add(entRef, out var slot);
 
         // Resize map & Array to fit all potential new entities
         if (createdChunk)
@@ -324,7 +324,8 @@ public partial class World : IDisposable
 
         // Copy entity to other archetype
         ref var slot = ref EntityInfo.GetSlot(entity.Id);
-        var created = destination.Add(entity, out destinationSlot);
+        var version = EntityInfo.GetVersion(entity.Id);
+        var created = destination.Add(new EntityReference(entity, version), out destinationSlot);
         Archetype.CopyComponents(source, ref slot, destination, ref destinationSlot);
         source.Remove(ref slot, out var movedEntity);
 
@@ -485,13 +486,13 @@ public partial class World : IDisposable
     /// <param name="queryDescription">The <see cref="QueryDescription"/> which specifies the components or <see cref="Entity"/>s for which to search.</param>
     /// <param name="list">The <see cref="Span{T}"/> receiving the found <see cref="Entity"/>s.</param>
     /// <param name="start">The start index inside the <see cref="Span{T}"/>. Default is 0.</param>
-    public void GetEntities(in QueryDescription queryDescription, Span<Entity> list, int start = 0)
+    public void GetEntities(in QueryDescription queryDescription, Span<EntityReference> list, int start = 0)
     {
         var index = 0;
         var query = Query(in queryDescription);
         foreach (ref var chunk in query)
         {
-            ref var entityFirstElement = ref chunk.Entity(0);
+            ref var entityFirstElement = ref chunk.EntityReference(0);
             foreach (var entityIndex in chunk)
             {
                 var entity = Unsafe.Add(ref entityFirstElement, entityIndex);
@@ -671,7 +672,7 @@ public partial class World
         var query = Query(in queryDescription);
         foreach (ref var chunk in query)
         {
-            ref var entityLastElement = ref chunk.Entity(0);
+            ref var entityLastElement = ref chunk.EntityReference(0);
             foreach (var entityIndex in chunk)
             {
                 var entity = Unsafe.Add(ref entityLastElement, entityIndex);
@@ -693,7 +694,7 @@ public partial class World
         var query = Query(in queryDescription);
         foreach (ref var chunk in query)
         {
-            ref var entityFirstElement = ref chunk.Entity(0);
+            ref var entityFirstElement = ref chunk.EntityReference(0);
             foreach (var entityIndex in chunk)
             {
                 var entity = Unsafe.Add(ref entityFirstElement, entityIndex);
@@ -714,7 +715,7 @@ public partial class World
         var query = Query(in queryDescription);
         foreach (ref var chunk in query)
         {
-            ref var entityFirstElement = ref chunk.Entity(0);
+            ref var entityFirstElement = ref chunk.EntityReference(0);
             foreach (var entityIndex in chunk)
             {
                 var entity = Unsafe.Add(ref entityFirstElement, entityIndex);
@@ -748,7 +749,7 @@ public partial class World
             Size -= archetype.EntityCount;
             foreach (ref var chunk in archetype)
             {
-                ref var entityFirstElement = ref chunk.Entity(0);
+                ref var entityFirstElement = ref chunk.EntityReference(0);
                 foreach (var index in chunk)
                 {
                     var entity = Unsafe.Add(ref entityFirstElement, index);
@@ -764,11 +765,11 @@ public partial class World
 
                     OnEntityDestroyed(entity);
 
-                    var version = EntityInfo.GetVersion(entity.Id);
-                    var recycledEntity = new RecycledEntity(entity.Id, unchecked(version + 1));
+                    var version = entity.Version;
+                    var recycledEntity = new RecycledEntity(entity.Entity.Id, unchecked(version + 1));
 
                     RecycledIds.Enqueue(recycledEntity);
-                    EntityInfo.Remove(entity.Id);
+                    EntityInfo.Remove(entity.Entity.Id);
                 }
 
                 chunk.Clear();
