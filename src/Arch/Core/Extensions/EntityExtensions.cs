@@ -225,7 +225,8 @@ public static partial class EntityExtensions
     /// </summary>
     /// <param name="entity">The <see cref="Entity"/>.</param>
     /// <param name="components">The components <see cref="IList{T}"/>.</param>
-    public static void SetRange(this in Entity entity, params object[] components)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SetRange(this in Entity entity, Span<object> components)
     {
         var world = World.Worlds[entity.WorldId];
         world.SetRange(entity, components);
@@ -251,7 +252,7 @@ public static partial class EntityExtensions
     /// <param name="types">The component <see cref="ComponentType"/>.</param>
     /// <returns>True if it has the desired component, otherwhise false.</returns>
     [Pure]
-    public static bool HasRange(this in Entity entity, params ComponentType[] types)
+    public static bool HasRange(this in Entity entity, Span<ComponentType> types)
     {
         var world = World.Worlds[entity.WorldId];
         return world.HasRange(entity, types);
@@ -277,7 +278,7 @@ public static partial class EntityExtensions
     /// <param name="types">The component <see cref="ComponentType"/>.</param>
     /// <returns>A reference to the component.</returns>
     [Pure]
-    public static object?[] GetRange(this in Entity entity, params ComponentType[] types)
+    public static object?[] GetRange(this in Entity entity, Span<ComponentType> types)
     {
         var world = World.Worlds[entity.WorldId];
         return world.GetRange(entity, types);
@@ -292,7 +293,7 @@ public static partial class EntityExtensions
     /// <param name="components">A <see cref="IList{T}"/> where the components are put it.</param>
     /// <returns>A reference to the component.</returns>
     [Pure]
-    public static void GetRange(this in Entity entity, ComponentType[] types, IList<object?> components)
+    public static void GetRange(this in Entity entity, Span<ComponentType> types, Span<object?> components)
     {
         var world = World.Worlds[entity.WorldId];
         world.GetRange(entity, types, components);
@@ -331,7 +332,7 @@ public static partial class EntityExtensions
     /// <param name="entity">The <see cref="Entity"/>.</param>
     /// <param name="components">The component <see cref="IList{T}"/>.</param>
     [SkipLocalsInit]
-    public static void AddRange(this in Entity entity, params object[] components)
+    public static void AddRange(this in Entity entity, Span<object> components)
     {
         var world = World.Worlds[entity.WorldId];
         world.AddRange(entity, components);
@@ -341,9 +342,9 @@ public static partial class EntityExtensions
     ///     Adds an list of new components to the <see cref="Entity"/> and moves it to the new <see cref="Archetype"/>.
     /// </summary>
     /// <param name="entity">The <see cref="Entity"/>.</param>
-    /// <param name="components">A <see cref="IList{T}"/> of <see cref="ComponentType"/>'s, those are added to the <see cref="Entity"/>.</param>
+    /// <param name="components">A <see cref="Span{T}"/> of <see cref="ComponentType"/>'s, those are added to the <see cref="Entity"/>.</param>
     [SkipLocalsInit]
-    public static void AddRange(this in Entity entity, IList<ComponentType> components)
+    public static void AddRange(this in Entity entity, Span<ComponentType> components)
     {
         var world = World.Worlds[entity.WorldId];
         world.AddRange(entity, components);
@@ -355,19 +356,7 @@ public static partial class EntityExtensions
     /// <param name="entity">The <see cref="Entity"/>.</param>
     /// <param name="types">A <see cref="IList{T}"/> of <see cref="ComponentType"/>'s, those are removed from the <see cref="Entity"/>.</param>
     [SkipLocalsInit]
-    public static void RemoveRange(this in Entity entity, params ComponentType[] types)
-    {
-        var world = World.Worlds[entity.WorldId];
-        world.RemoveRange(entity, types);
-    }
-
-    /// <summary>
-    ///     Removes a list of <see cref="ComponentType"/>'s from the <see cref="Entity"/> and moves it to a different <see cref="Archetype"/>.
-    /// </summary>
-    /// <param name="entity">The <see cref="Entity"/>.</param>
-    /// <param name="types">A <see cref="IList{T}"/> of <see cref="ComponentType"/>'s, those are removed from the <see cref="Entity"/>.</param>
-    [SkipLocalsInit]
-    public static void RemoveRange(this in Entity entity, IList<ComponentType> types)
+    public static void RemoveRange(this in Entity entity, Span<ComponentType> types)
     {
         var world = World.Worlds[entity.WorldId];
         world.RemoveRange(entity, types);
