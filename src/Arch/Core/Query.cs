@@ -502,7 +502,7 @@ public partial class Query : IEquatable<Query>
     ///     If the list of <see cref="_allArchetypes"/> has been changed, the entire list is scanned again to create a new list of <see cref="_matchingArchetypes"/> that match the query.
     ///     This means that there is no need to constantly recheck.
     /// </summary>
-    private void Match()
+    public void Match()
     {
         // Hashcode changed, list was modified?
         var newArchetypesHashCode = _allArchetypes.GetHashCode();
@@ -524,6 +524,11 @@ public partial class Query : IEquatable<Query>
         }
 
         _allArchetypesHashCode = newArchetypesHashCode;
+    }
+
+    public PooledList<Archetype> GetMatches()
+    {
+        return _matchingArchetypes;
     }
 
     /// <summary>
