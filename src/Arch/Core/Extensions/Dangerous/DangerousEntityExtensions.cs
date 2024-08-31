@@ -6,9 +6,14 @@ namespace Arch.Core.Extensions.Dangerous;
 /// </summary>
 public static class DangerousEntityExtensions
 {
+    public static EntityReference CreateEntityReferenceStruct(int id, int version, int world)
+    {
+        return new EntityReference(CreateEntityStruct(id, world), version);
+    }
+
     /// <summary>
     ///     Creates an <see cref="Entity"/> struct and returns it.
-    ///     Does not create an <see cref="Entity"/> in the world, just the plain struct. 
+    ///     Does not create an <see cref="Entity"/> in the world, just the plain struct.
     /// </summary>
     /// <param name="id">Its id.</param>
     /// <param name="world">Its world id.</param>

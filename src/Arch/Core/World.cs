@@ -785,7 +785,6 @@ public partial class World
     /// </summary>
     /// <param name="queryDescription">The <see cref="QueryDescription"/> which specifies which <see cref="Entity"/>s will be targeted.</param>
     /// <param name="value">The value of the component to set.</param>
-
     public void Set<T>(in QueryDescription queryDescription, in T? value = default)
     {
         var query = Query(in queryDescription);
@@ -797,8 +796,8 @@ public partial class World
                 ref var component = ref Unsafe.Add(ref componentFirstElement, index);
                 component = value;
 #if EVENTS
-                ref var entity = ref chunk.Entity(index);
-                OnComponentSet<T>(entity);
+                ref var entity = ref chunk.EntityReference(index);
+                OnComponentSet<T>(entity.Entity);
 #endif
             }
         }

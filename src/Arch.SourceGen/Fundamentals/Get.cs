@@ -203,7 +203,7 @@ public static class GetExtensions
             {
                 {{getArrays}}
 
-                ref var entity = ref Entity(index);
+                ref var entity = ref EntityReference(index);
                 {{gets}}
 
                 return new EntityComponents<{{generics}}>(ref entity, {{inParams}});

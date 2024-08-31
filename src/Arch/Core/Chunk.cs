@@ -84,7 +84,7 @@ public partial struct Chunk
     {
         // Stack variable faster than accessing 3 times the Size field.
         var size = Size;
-        Entity(size) = entity;
+        EntityReference(size) = entity;
         Size = size + 1;
 
         return size;
@@ -174,7 +174,7 @@ public partial struct Chunk
         var lastIndex = Size - 1;
 
         // Copy last entity to replace the removed one.
-        ref var entities = ref Entities.DangerousGetReference();
+        ref var entities = ref EntityReferences.DangerousGetReference();
         Unsafe.Add(ref entities, index) = Unsafe.Add(ref entities, lastIndex);  // entities[index] = entities[lastIndex]; but without bound checks
 
         // Copy components of last entity to replace the removed one
