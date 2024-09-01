@@ -15,6 +15,8 @@ namespace Arch.Core;
 [SkipLocalsInit]
 internal record struct Slot
 {
+    public static readonly Slot Invalid = new Slot(-1, -1);
+
     /// <summary>
     ///     The index of the <see cref="Arch.Core.Entity"/> in the <see cref="Chunk"/>.
     /// </summary>
@@ -309,8 +311,13 @@ public sealed partial class Archetype
     internal bool TryIndex<T>(out int i)
     {
         var id = Component<T>.ComponentType.Id;
-        Debug.Assert(id != -1, $"Index is out of bounds, component {typeof(T)} with id {id} does not exist in this chunk.");
+        return TryIndex(id, out i);
+    }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Pure]
+    internal bool TryIndex(int id, out int i)
+    {
         if (id >= _componentIdToArrayIndex.Length)
         {
             i = -1;
@@ -320,8 +327,6 @@ public sealed partial class Archetype
         i = _componentIdToArrayIndex.DangerousGetReferenceAt(id);
         return i != -1;
     }
-
-
 
     /// <summary>
     ///     The component types that the <see cref="Arch.Core.Entity"/>'s stored here have.

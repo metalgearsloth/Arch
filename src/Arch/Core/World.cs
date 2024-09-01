@@ -999,6 +999,38 @@ public partial class World
         return true;
     }
 
+    [Pure]
+    public bool TryGetAlive<T>(EntityReference entRef, out T? component)
+    {
+        ref var slot = ref EntityInfo.EntitySlots[entRef.Entity.Id];
+
+        // If the EntityId isn't in the archetype.
+        if (slot.Slot == Slot.Invalid)
+        {
+            component = default;
+            return false;
+        }
+
+        if (!slot.Archetype.TryIndex<T>(out int compIndex))
+        {
+            component = default;
+            return false;
+        }
+
+        // If we have a re-used entityref sanity-check it.
+        if (slot.Archetype.Entity(ref slot.Slot) != entRef)
+        {
+            component = default;
+            return false;
+        }
+
+        ref var chunk = ref slot.Archetype.Chunks[slot.Slot.ChunkIndex];
+        Debug.Assert(compIndex != -1 && compIndex < chunk.Components.Length, $"Index is out of bounds, component {typeof(T)} with id {compIndex} does not exist in this chunk.");
+        var array = Unsafe.As<T[]>(chunk.Components.DangerousGetReferenceAt(compIndex));
+        component = array[slot.Slot.Index];
+        return true;
+    }
+
     /// <summary>
     ///     Tries to return a reference to the component of an <see cref="Entity"/>.
     /// </summary>
@@ -1186,6 +1218,7 @@ public partial class World
     public bool HasRange(Entity entity, Span<ComponentType> types)
     {
         var archetype = EntityInfo.GetArchetype(entity.Id);
+
         foreach (var type in types)
         {
             if (!archetype.Has(type))
@@ -1270,6 +1303,51 @@ public partial class World
         var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
         component = entitySlot.Archetype.Get(ref entitySlot.Slot, type);
         return true;
+    }
+
+    /// <summary>
+    /// TryGet but also returns false if the entity isn't alive.
+    /// </summary>
+    [Pure]
+    public bool TryGetAlive(EntityReference entRef, int compId, out object? component)
+    {
+        ref var slot = ref EntityInfo.EntitySlots[entRef.Entity.Id];
+
+        // If the EntityId isn't in the archetype.
+        if (slot.Slot == Slot.Invalid)
+        {
+            component = default;
+            return false;
+        }
+
+        if (!slot.Archetype.TryIndex(compId, out int compIndex))
+        {
+            component = default;
+            return false;
+        }
+
+        // If we have a re-used entityref sanity-check it.
+        if (slot.Archetype.Entity(ref slot.Slot) != entRef)
+        {
+            component = default;
+            return false;
+        }
+
+        ref var chunk = ref slot.Archetype.Chunks[slot.Slot.ChunkIndex];
+        Debug.Assert(compIndex != -1 && compIndex < chunk.Components.Length, $"Index is out of bounds, component {compId} with id {compIndex} does not exist in this chunk.");
+        var array = chunk.Components.DangerousGetReferenceAt(compIndex);
+        component = array.GetValue(slot.Slot.Index);
+        return true;
+    }
+
+    /// <summary>
+    /// TryGet but also returns false if the entity isn't alive.
+    /// </summary>
+    [Pure]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryGetAlive(EntityReference entRef, ComponentType type, out object? component)
+    {
+        return TryGetAlive(entRef, type.Id, out component);
     }
 
     /// <summary>
