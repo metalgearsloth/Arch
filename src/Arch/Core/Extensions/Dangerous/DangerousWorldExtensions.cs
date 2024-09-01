@@ -116,14 +116,14 @@ public static class DangerousWorldExtensions
     /// </summary>
     /// <param name="world">The <see cref="World"/> instance.</param>
     /// <param name="slots">The new slots array.</param>
-    public static void SetSlots(this World world, JaggedArray<(Archetype, (int, int))> slots)
+    public static void SetSlots(this World world, JaggedArray<(Archetype Archetype, (int, int) Slot, int Version)> slots)
     {
         var convertedSlots = new JaggedArray<EntitySlot>(slots.Buckets, slots.Capacity);
 
         for (int i = 0; i < slots.Capacity; i++)
         {
             var slot = slots[i];
-            convertedSlots[i] = new EntitySlot(slot.Item1, new Slot(slot.Item2.Item1, slot.Item2.Item2));
+            convertedSlots[i] = new EntitySlot(slot.Archetype, new Slot(slot.Slot.Item1, slot.Slot.Item2), slot.Version);
         }
 
         world.EntityInfo.EntitySlots = convertedSlots;

@@ -332,7 +332,7 @@ public partial class World : IDisposable
 
         // Update moved entity from the remove
         EntityInfo.Move(movedEntity, slot);
-        EntityInfo.Move(entity.Id, destination, destinationSlot);
+        EntityInfo.Move(entity.Id, destination, destinationSlot, version);
 
         // Calculate the entity difference between the moved archetypes to allocate more space accordingly.
         if (created)
@@ -1018,7 +1018,7 @@ public partial class World
         }
 
         // If we have a re-used entityref sanity-check it.
-        if (slot.Archetype.Entity(ref slot.Slot) != entRef)
+        if (slot.Version != entRef.Version)
         {
             component = default;
             return false;
@@ -1327,7 +1327,7 @@ public partial class World
         }
 
         // If we have a re-used entityref sanity-check it.
-        if (slot.Archetype.Entity(ref slot.Slot) != entRef)
+        if (slot.Version != entRef.Version)
         {
             component = default;
             return false;

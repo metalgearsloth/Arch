@@ -55,7 +55,6 @@ internal struct EntityInfo
 [SkipLocalsInit]
 internal struct EntitySlot
 {
-
     /// <summary>
     ///     A reference to its <see cref="Archetype"/>.
     /// </summary>
@@ -66,15 +65,18 @@ internal struct EntitySlot
     /// </summary>
     public Slot Slot;
 
+    public int Version;
+
     /// <summary>
     ///     Initializes a new instance of the <see cref="EntityInfo"/> struct.
     /// </summary>
     /// <param name="archetype">Its <see cref="Archetype"/>.</param>
     /// <param name="slot">Its <see cref="Slot"/>.</param>
-    public EntitySlot(Archetype archetype, Slot slot)
+    public EntitySlot(Archetype archetype, Slot slot, int version)
     {
         Archetype = archetype;
         Slot = slot;
+        Version = version;
     }
 }
 
@@ -110,7 +112,7 @@ internal class EntityInfoStorage
         );
         EntitySlots = new JaggedArray<EntitySlot>(
             cpuL1CacheSize / Unsafe.SizeOf<EntitySlot>(),
-            new EntitySlot(null!, new Slot(-1,-1)),
+            new EntitySlot(null!, new Slot(-1,-1), -1),
             256
         );
     }
@@ -126,7 +128,7 @@ internal class EntityInfoStorage
     public void Add(int id, int version, Archetype archetype, Slot slot)
     {
         Versions.Add(id, version);
-        EntitySlots.Add(id,new EntitySlot(archetype, slot));
+        EntitySlots.Add(id,new EntitySlot(archetype, slot, version));
     }
 
     /// <summary>
@@ -225,9 +227,9 @@ internal class EntityInfoStorage
     /// <param name="archetype">Its new <see cref="Archetype"/>.</param>
     /// <param name="slot">Its new <see cref="Slot"/>.</param>
 
-    public void Move(int id, Archetype archetype, Slot slot)
+    public void Move(int id, Archetype archetype, Slot slot, int version)
     {
-        EntitySlots[id] = new EntitySlot(archetype,slot);
+        EntitySlots[id] = new EntitySlot(archetype,slot, version);
     }
 
     /// <summary>
@@ -257,7 +259,7 @@ internal class EntityInfoStorage
                 var entity = Unsafe.Add(ref entityFirstElement, index);
 
                 // Update entity info
-                Move(entity.Entity.Id, newArchetype, newArchetypeSlot);
+                Move(entity.Entity.Id, newArchetype, newArchetypeSlot, entity.Version);
                 newArchetypeSlot++;
 
                 if (newArchetypeSlot.Index >= newArchetype.EntitiesPerChunk)
