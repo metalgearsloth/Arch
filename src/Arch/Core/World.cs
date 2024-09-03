@@ -1002,33 +1002,16 @@ public partial class World
     [Pure]
     public bool TryGetAlive<T>(EntityReference entRef, out T? component)
     {
-        ref var slot = ref EntityInfo.EntitySlots[entRef.Entity.Id];
+        var id = Component<T>.ComponentType.Id;
 
-        // If the EntityId isn't in the archetype.
-        if (slot.Slot == Slot.Invalid)
+        if (TryGetAlive(entRef, id, out var obj))
         {
-            component = default;
-            return false;
+            component = (T)obj!;
+            return true;
         }
 
-        if (!slot.Archetype.TryIndex<T>(out int compIndex))
-        {
-            component = default;
-            return false;
-        }
-
-        // If we have a re-used entityref sanity-check it.
-        if (slot.Version != entRef.Version)
-        {
-            component = default;
-            return false;
-        }
-
-        ref var chunk = ref slot.Archetype.Chunks[slot.Slot.ChunkIndex];
-        Debug.Assert(compIndex != -1 && compIndex < chunk.Components.Length, $"Index is out of bounds, component {typeof(T)} with id {compIndex} does not exist in this chunk.");
-        var array = Unsafe.As<T[]>(chunk.Components.DangerousGetReferenceAt(compIndex));
-        component = array[slot.Slot.Index];
-        return true;
+        component = default;
+        return false;
     }
 
     /// <summary>
@@ -1311,10 +1294,10 @@ public partial class World
     [Pure]
     public bool TryGetAlive(EntityReference entRef, int compId, out object? component)
     {
-        ref var slot = ref EntityInfo.EntitySlots[entRef.Entity.Id];
-
         // If the EntityId isn't in the archetype.
-        if (slot.Slot == Slot.Invalid)
+        var slot = EntityInfo.GetEntitySlot(entRef.Entity.Id);
+
+        if (slot.Slot.Index == Slot.Invalid.Index)
         {
             component = default;
             return false;
@@ -1333,7 +1316,7 @@ public partial class World
             return false;
         }
 
-        ref var chunk = ref slot.Archetype.Chunks[slot.Slot.ChunkIndex];
+        ref var chunk = ref slot.Archetype.GetChunk(slot.Slot.ChunkIndex);
         Debug.Assert(compIndex != -1 && compIndex < chunk.Components.Length, $"Index is out of bounds, component {compId} with id {compIndex} does not exist in this chunk.");
         var array = chunk.Components.DangerousGetReferenceAt(compIndex);
         component = array.GetValue(slot.Slot.Index);

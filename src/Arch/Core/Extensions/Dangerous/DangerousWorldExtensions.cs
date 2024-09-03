@@ -140,4 +140,10 @@ public static class DangerousWorldExtensions
         ref var slot = ref world.EntityInfo.GetSlot(entity.Id);
         return (slot.Index, slot.ChunkIndex);
     }
+
+    public static ((int, int), Archetype) GetSlotArchetype(this World world, Entity entity)
+    {
+        var slot = world.EntityInfo.GetEntitySlot(entity.Id);
+        return ((slot.Slot.Index, slot.Slot.ChunkIndex), slot.Archetype);
+    }
 }
