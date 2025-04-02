@@ -21,6 +21,7 @@ public sealed class BitSet
     /// </summary>
     /// <param name="id">The id or bit.</param>
     /// <returns>A size of required <see cref="uint"/>s for the bitset.</returns>
+
     public static int RequiredLength(int id)
     {
 #if NET7_0
@@ -68,7 +69,7 @@ public sealed class BitSet
     /// </summary>
     public int HighestIndex
     {
-            get => _max;
+        get => _max;
     }
 
     /// <summary>
@@ -76,7 +77,7 @@ public sealed class BitSet
     /// </summary>
     public int HighestBit
     {
-            get => _highestBit;
+        get => _highestBit;
     }
 
     /// <summary>
@@ -84,14 +85,14 @@ public sealed class BitSet
     /// </summary>
     public int Length
     {
-            get => _bits.Length;
+        get => _bits.Length;
     }
 
     /// <summary>
     ///     Checks whether a bit is set at the index.
     /// </summary>
     /// <param name="index">The index.</param>
-    /// <returns>True if it is, otherwhise false</returns>
+    /// <returns>True if it is, otherwise false</returns>
     public bool IsSet(int index)
     {
         var b = index >> IndexSize;
@@ -138,7 +139,7 @@ public sealed class BitSet
     }
 
     /// <summary>
-    ///
+    ///     Sets all bits.
     /// </summary>
     public void SetAll()
     {
@@ -394,7 +395,7 @@ public sealed class BitSet
     public Span<uint> AsSpan()
     {
         var max = (_highestBit / (BitSize + 1)) + 1;
-        return _bits.AsSpan(0, max);
+        return MemoryMarshal.CreateSpan(ref _bits[0], max);
     }
 
     /// <summary>
@@ -418,7 +419,7 @@ public sealed class BitSet
             span[index] = 0;
         }
 
-        return span[..length];
+        return MemoryMarshal.CreateSpan(ref span[0], length);
     }
 
     /// <summary>
@@ -485,7 +486,8 @@ public readonly ref struct SpanBitSet
     ///     Checks whether a bit is set at the index.
     /// </summary>
     /// <param name="index">The index.</param>
-    /// <returns>True if it is, otherwhise false</returns>
+    /// <returns>True if it is, otherwise false</returns>
+
     public bool IsSet(int index)
     {
         var b = index >> ByteSize;
@@ -502,6 +504,7 @@ public readonly ref struct SpanBitSet
     ///     Resizes its internal array if necessary.
     /// </summary>
     /// <param name="index">The index.</param>
+
     public void SetBit(int index)
     {
         var b = index >> ByteSize;
@@ -517,6 +520,7 @@ public readonly ref struct SpanBitSet
     ///     Clears the bit at the given index.
     /// </summary>
     /// <param name="index">The index.</param>
+
     public void ClearBit(int index)
     {
         var b = index >> ByteSize;
@@ -531,6 +535,7 @@ public readonly ref struct SpanBitSet
     /// <summary>
     ///
     /// </summary>
+
     public void SetAll()
     {
         var count = _bits.Length;
@@ -543,6 +548,7 @@ public readonly ref struct SpanBitSet
     /// <summary>
     ///     Clears all set bits.
     /// </summary>
+
     public void ClearAll()
     {
         _bits.Clear();
@@ -552,6 +558,7 @@ public readonly ref struct SpanBitSet
     ///     Creates a <see cref="Span{T}"/> to access the <see cref="_bits"/>.
     /// </summary>
     /// <returns>The hash.</returns>
+
     public Span<uint> AsSpan()
     {
         return _bits;
@@ -562,6 +569,7 @@ public readonly ref struct SpanBitSet
     /// </summary>
     /// <param name=""></param>
     /// <returns>The hash.</returns>
+
     public Span<uint> AsSpan(Span<uint> span, bool zero = true)
     {
         // Prevent exception because target array is to small for copy operation
@@ -584,6 +592,7 @@ public readonly ref struct SpanBitSet
     ///     Creates a new <see cref="Enumerator{T}"/> that enumerates over this instance.
     /// </summary>
     /// <returns>A new <see cref="Enumerator{T}"/>.</returns>
+
     public Enumerator<uint> GetEnumerator()
     {
         return new Enumerator<uint>(AsSpan());
@@ -593,6 +602,7 @@ public readonly ref struct SpanBitSet
     ///     Calculates the hash, this is unique for the set bits. Two <see cref="BitSet"/> with the same set bits, result in the same hash.
     /// </summary>
     /// <returns>The hash.</returns>
+
     public override int GetHashCode()
     {
         return Component.GetHashCode(AsSpan());
@@ -602,6 +612,7 @@ public readonly ref struct SpanBitSet
     ///     Prints the content of this instance.
     /// </summary>
     /// <returns>The string.</returns>
+
     public override string ToString()
     {
         // Convert uint to binary form for pretty printing

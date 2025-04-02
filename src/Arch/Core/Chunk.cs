@@ -1,10 +1,140 @@
+using System.Buffers;
 using System.Diagnostics.Contracts;
+using System.Drawing;
 using Arch.Core.Events;
+using Arch.Core.Extensions;
 using Arch.Core.Extensions.Internal;
 using Arch.Core.Utils;
+using Arch.LowLevel;
+using Collections.Pooled;
 using CommunityToolkit.HighPerformance;
+using Array = System.Array;
 
 namespace Arch.Core;
+
+
+/// <summary>
+///     The <see cref="Chunks"/> class
+///     represents an array of <see cref="Chunk"/>s and manages them, including being able to create and add new space for them.
+/// </summary>
+public class Chunks
+{
+    /// <summary>
+    ///     Creates a new <see cref="Chunks"/> instance.
+    /// </summary>
+    /// <param name="capacity">The inital capacity.</param>
+    public Chunks(int capacity = 1)
+    {
+        Items = ArrayPool<Chunk>.Shared.Rent(capacity);
+        Count = 0;
+        Capacity = capacity;
+    }
+
+    /// <summary>
+    ///     All used <see cref="Chunk"/>s in an <see cref="Array{T}"/>.
+    /// </summary>
+    private Array<Chunk> Items { get; set; }
+
+    /// <summary>
+    ///     The number of allocated <see cref="Chunk"/>s in the <see cref="Items"/>.
+    /// </summary>
+    public int Count { get; set; }
+
+    /// <summary>
+    ///     The total allocated capacity of <see cref="Chunk"/>s in <see cref="Items"/>.
+    /// </summary>
+    public int Capacity { get; private set; }
+
+    /// <summary>
+    ///     Adds a new <see cref="Chunk"/> to this instance.
+    /// </summary>
+    /// <param name="chunk"></param>
+    public void Add(in Chunk chunk)
+    {
+        Debug.Assert(Count + 1 <= Capacity, "Capacity exceeded.");
+        Items[Count++] = chunk;
+    }
+
+    /// <summary>
+    ///     Ensures capacity for this instance.
+    /// </summary>
+    /// <param name="newCapacity">The new capacity</param>
+    public void EnsureCapacity(int newCapacity)
+    {
+        if (newCapacity <= Capacity)
+        {
+            return;
+        }
+
+        var sourceArray = Items;
+        var destinationArray = (Array<Chunk>)ArrayPool<Chunk>.Shared.Rent(newCapacity);
+        Arch.LowLevel.Array.Copy(ref sourceArray, 0, ref destinationArray, 0, Capacity );
+        ArrayPool<Chunk>.Shared.Return(sourceArray, true);
+
+        Items = destinationArray;
+        Capacity = newCapacity;
+    }
+
+    /// <summary>
+    ///     Trims this instance and frees space not required anymore.
+    /// </summary>
+    public void TrimExcess()
+    {
+        // This always spares one single chunk.
+        var minimalSize = Count > 0 ? Count : 1;
+
+        // Decrease chunk size
+        var newChunks = ArrayPool<Chunk>.Shared.Rent(minimalSize);
+        Array.Copy(Items, newChunks, minimalSize);
+        ArrayPool<Chunk>.Shared.Return(Items, true);
+
+        Items = newChunks;
+        Capacity = minimalSize;
+    }
+
+    /// <summary>
+    ///     Gets or sets the item at the given index.
+    /// </summary>
+    /// <param name="index">The index.</param>
+    public ref Chunk this[int index]
+    {
+        get => ref Items[index];
+    }
+
+    /// <summary>
+    ///     Returns a <see cref="Span{T}"/> with which you can iterate over the <see cref="Items"/> content of this instance.
+    /// </summary>
+    /// <returns></returns>
+    public Span<Chunk> AsSpan()
+    {
+        return Items.AsSpan();
+    }
+
+    /// <summary>
+    ///     Clears this instance.
+    /// </summary>
+    public void Clear(bool clearCount = false)
+    {
+        for (var index = 0; index < Count; index++)
+        {
+            ref var chunk = ref this[index];
+            chunk.Clear();
+        }
+
+        Count = clearCount ? 0 : Count;
+    }
+
+    /// <summary>
+    ///     Converts this instance to an <see cref="Chunk"/>s array.
+    /// </summary>
+    /// <param name="instance">The instance.</param>
+    /// <returns>The underlying <see cref="Chunk"/>s array.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator Chunk[](Chunks instance)
+    {
+        return instance.Items;
+    }
+}
 
 /// <summary>
 ///     The <see cref="Chunk"/> struct represents a contiguous block of memory in which various components are stored in Structure of Arrays.
@@ -21,8 +151,7 @@ public partial struct Chunk
     /// </summary>
     /// <param name="capacity">How many entities of the respective component structure fit into this <see cref="Chunk"/>.</param>
     /// <param name="types">The respective component structure of all entities in this <see cref="Chunk"/>.</param>
-    internal Chunk(int capacity, Span<ComponentType> types)
-        : this(capacity, types.ToLookupArray(), types) { }
+    internal Chunk(int capacity, Span<ComponentType> types) : this(capacity, types.ToLookupArray(), types) { }
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="Chunk"/> struct
@@ -33,7 +162,7 @@ public partial struct Chunk
     internal Chunk(int capacity, int[] componentIdToArrayIndex, Span<ComponentType> types)
     {
         // Calculate capacity and init arrays.
-        Size = 0;
+        Count = 0;
         Capacity = capacity;
 
         Entities = new Entity[Capacity];
@@ -53,29 +182,44 @@ public partial struct Chunk
     ///     The <see cref="Arch.Core.Entity"/>'s that are stored in this chunk.
     ///     Can be accessed during the iteration.
     /// </summary>
-    public readonly Entity[] Entities { [Pure] get; }
+    public readonly Entity[] Entities { [Pure] get; }  // 8 Byte
 
     /// <summary>
     ///     The component arrays in which the components of the <see cref="Arch.Core.Entity"/>'s are stored.
     ///     Represent the component structure.
     ///     They can be accessed quickly using the <see cref="ComponentIdToArrayIndex"/> or one of the chunk methods.
     /// </summary>
-    public readonly Array[] Components { [Pure] get; }
+    public readonly Array[] Components { [Pure] get; }  // 8 Byte
 
     /// <summary>
     ///     The lookup array that maps component ids to component array indexes to quickly access them.
     /// </summary>
-    public readonly int[] ComponentIdToArrayIndex { [Pure] get; }
+    public readonly int[] ComponentIdToArrayIndex { [Pure] get; }  // 8 Byte
 
     /// <summary>
     ///     The number of occupied <see cref="Arch.Core.Entity"/> slots in this <see cref="Chunk"/>.
     /// </summary>
-    public int Size { [Pure] get; set;}
+    public int Count { [Pure] get;  internal set; }  // 4 Byte
 
     /// <summary>
     ///     The number of possible <see cref="Arch.Core.Entity"/>'s in this <see cref="Chunk"/>.
     /// </summary>
-    public int Capacity { [Pure] get; }
+    public int Capacity { [Pure] get; }   // 4 Byte
+
+    /// <summary>
+    ///     The space that is left in this instance.
+    /// </summary>
+    public readonly int Buffer { [Pure] get => Capacity - Count; }
+
+    /// <summary>
+    ///     Checks whether this instance is full or not.
+    /// </summary>
+    public readonly bool IsFull { [Pure] get => Count >= Capacity; }
+
+    /// <summary>
+    ///     Checks whether this instance is full or not.
+    /// </summary>
+    public readonly bool IsEmpty { [Pure] get => Count < Capacity; }
 
     /// <summary>
     ///     Inserts an entity into the <see cref="Chunk"/>.
@@ -85,10 +229,12 @@ public partial struct Chunk
     /// <returns>The index occupied by the <see cref="Arch.Core.Entity"/> in the chunk.</returns>
     internal int Add(Entity entity)
     {
-        Entities[Size] = entity;
-        Size++;
+        // Stack variable faster than accessing 3 times the Size field.
+        var size = Count;
+        Entity(size) = entity;
+        Count = size + 1;
 
-        return Size - 1;
+        return size;
     }
 
     /// <summary>
@@ -98,10 +244,10 @@ public partial struct Chunk
     /// <typeparam name="T">The generic type.</typeparam>
     /// <param name="index">The index in the array.</param>
     /// <param name="cmp">The component value.</param>
-    public void Set<T>(int index, in T cmp)
+    public void Copy<T>(int index, in T cmp)
     {
-        var array = GetSpan<T>();
-        array[index] = cmp;
+        ref var item = ref GetFirst<T>();
+        Unsafe.Add(ref item, index) = cmp;
     }
 
     /// <summary>
@@ -113,7 +259,8 @@ public partial struct Chunk
     public bool Has<T>()
     {
         var id = Component<T>.ComponentType.Id;
-        return id < ComponentIdToArrayIndex.Length && ComponentIdToArrayIndex[id] != -1;
+        var idToArrayIndex = ComponentIdToArrayIndex;
+        return id < idToArrayIndex.Length && idToArrayIndex.DangerousGetReferenceAt(id) != -1;
     }
 
     /// <summary>
@@ -125,8 +272,8 @@ public partial struct Chunk
     [Pure]
     public ref T Get<T>(int index)
     {
-        var array = GetSpan<T>();
-        return ref array[index];
+        ref var item = ref GetFirst<T>();
+        return ref Unsafe.Add(ref item, index);
     }
 
     /// <summary>
@@ -163,7 +310,7 @@ public partial struct Chunk
     [Pure]
     public ref Entity Entity(int index)
     {
-        return ref Entities.AsSpan()[index];
+        return ref Entities.DangerousGetReferenceAt(index);
     }
 
     /// <summary>
@@ -175,18 +322,22 @@ public partial struct Chunk
     internal void Remove(int index)
     {
         // Last entity in archetype.
-        var lastIndex = Size - 1;
+        var lastIndex = Count - 1;
 
         // Copy last entity to replace the removed one.
-        Entities[index] = Entities[lastIndex];
-        for (var i = 0; i < Components.Length; i++)
+        ref var entities = ref Entities.DangerousGetReference();
+        Unsafe.Add(ref entities, index) = Unsafe.Add(ref entities, lastIndex);  // entities[index] = entities[lastIndex]; but without bound checks
+
+        // Copy components of last entity to replace the removed one
+        var components = Components;
+        for (var i = 0; i < components.Length; i++)
         {
-            var array = Components[i];
+            var array = components[i];
             Array.Copy(array, lastIndex, array, index, 1);
         }
 
         // Update the mapping.
-        Size--;
+        Count = lastIndex;
     }
 
     /// <summary>
@@ -195,7 +346,7 @@ public partial struct Chunk
     /// <returns>A new <see cref="EntityEnumerator"/> instance.</returns>
     public EntityEnumerator GetEnumerator()
     {
-        return new EntityEnumerator(Size);
+        return new EntityEnumerator(Count);
     }
 
     /// <summary>
@@ -204,16 +355,16 @@ public partial struct Chunk
     /// </summary>
     public void Clear()
     {
-        Size = 0;
+        Count = 0;
     }
 
     /// <summary>
-    ///     Converts this <see cref="Chunk"/> to a human readable string.
+    ///     Converts this <see cref="Chunk"/> to a human-readable string.
     /// </summary>
     /// <returns>A string.</returns>
     public override string ToString()
     {
-        return $"Chunk = {{ {nameof(Capacity)} = {Capacity}, {nameof(Size)} = {Size} }}";
+        return $"Chunk = {{ {nameof(Capacity)} = {Capacity}, {nameof(Count)} = {Count} }}";
     }
 }
 
@@ -226,13 +377,12 @@ public partial struct Chunk
     /// <typeparam name="T">The componen type.</typeparam>
     /// <returns>The index in the <see cref="Components"/> array.</returns>
     [SkipLocalsInit]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [Pure]
     private int Index<T>()
     {
         var id = Component<T>.ComponentType.Id;
         Debug.Assert(id != -1 && id < ComponentIdToArrayIndex.Length, $"Index is out of bounds, component {typeof(T)} with id {id} does not exist in this chunk.");
-        return ComponentIdToArrayIndex[id];
+        return ComponentIdToArrayIndex.DangerousGetReferenceAt(id);
     }
 
     /// <summary>
@@ -241,7 +391,6 @@ public partial struct Chunk
     /// <typeparam name="T">The component type.</typeparam>
     /// <returns>The array.</returns>
     [SkipLocalsInit]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [Pure]
     public T[] GetArray<T>()
     {
@@ -259,12 +408,11 @@ public partial struct Chunk
     /// <typeparam name="T">The component type.</typeparam>
     /// <returns>The array <see cref="Span{T}"/>.</returns>
     [SkipLocalsInit]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [Pure]
     public Span<T> GetSpan<T>()
     {
-        var array = GetArray<T>();
-        return MemoryMarshal.CreateSpan(ref array[0], array.Length);
+        ref var item = ref GetFirst<T>();
+        return MemoryMarshal.CreateSpan(ref item, Capacity);
     }
 
     /// <summary>
@@ -273,11 +421,10 @@ public partial struct Chunk
     /// <typeparam name="T">The component type.</typeparam>
     /// <returns>A reference to the first element.</returns>
     [SkipLocalsInit]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [Pure]
     public ref T GetFirst<T>()
     {
-        return ref GetArray<T>()[0];
+        return ref GetArray<T>().DangerousGetReference();
     }
 }
 
@@ -289,7 +436,7 @@ public partial struct Chunk
     /// </summary>
     /// <param name="index">The index in the array.</param>
     /// <param name="cmp">The component value.</param>
-    public void Set(int index, object cmp)
+    public void Copy(int index, object cmp)
     {
         var array = GetArray(cmp.GetType());
         array.SetValue(cmp, index);
@@ -309,7 +456,7 @@ public partial struct Chunk
             return false;
         }
 
-        return ComponentIdToArrayIndex[id] != -1;
+        return ComponentIdToArrayIndex.DangerousGetReferenceAt(id) != -1;
     }
 
     /// <summary>
@@ -339,7 +486,7 @@ public partial struct Chunk
             return -1;
         }
 
-        return ComponentIdToArrayIndex[id];
+        return ComponentIdToArrayIndex.DangerousGetReferenceAt(id);
     }
 
     /// <summary>
@@ -351,12 +498,52 @@ public partial struct Chunk
     public Array GetArray(ComponentType type)
     {
         var index = Index(type);
-        return Components[index];
+        return Components.DangerousGetReferenceAt(index);
     }
 }
 
 public partial struct Chunk
 {
+
+    /// <summary>
+    /// Copies the entities from the source array into the instance at a specific index.
+    /// </summary>
+    /// <param name="chunk">The <see cref="Chunk"/>.</param>
+    /// <param name="source">The <see cref="Span{T}"/> of <see cref="Entity"/>s being copied.</param>
+    /// <param name="index">The start-index inside the <see cref="source"/>.</param>
+    /// <param name="destinationIndex">The destination-index inside the <see cref="Entities"/>.</param>
+    /// <param name="length">The amount of entities to copy. </param>
+    internal static void Copy(ref Span<Entity> source, int index, ref Chunk chunk, int destinationIndex, int length)
+    {
+        var entities = chunk.Entities.AsSpan().Slice(destinationIndex, length);
+        source.Slice(index,length).CopyTo(entities);
+    }
+
+    /// <summary>
+    /// Copies the components from the source array into the instance at a specific index.
+    /// </summary>
+    /// <param name="chunk">The <see cref="Chunk"/>.</param>
+    /// <param name="source">The <see cref="Span{T}"/> of <see cref="Entity"/>s being copied.</param>
+    /// <param name="index">The start-index inside the <see cref="source"/>.</param>
+    /// <param name="destinationIndex">The destination-index inside the <see cref="Entities"/>.</param>
+    /// <param name="length">The amount of entities to copy. </param>
+    internal static void Copy<T>(ref Span<T> source, int index, ref Chunk chunk, int destinationIndex, int length)
+    {
+        var components = chunk.GetSpan<T>().Slice(destinationIndex, length);
+        source.Slice(index,length).CopyTo(components);
+    }
+
+    /// <summary>
+    /// Fills the components at a given index with a certain value.
+    /// </summary>
+    /// <param name="chunk">The <see cref="Chunk"/>.</param>
+    /// <param name="destinationIndex">The destination-index inside the <see cref="Entities"/>.</param>
+    /// <param name="length">The amount of entities to copy. </param>
+    /// <param name="value">The value to fill the items with.</param>
+    internal static void Fill<T>(ref Chunk chunk, int destinationIndex, int length, in T value)
+    {
+        chunk.GetSpan<T>().Slice(destinationIndex, length).Fill(value);
+    }
 
     /// <summary>
     ///  Copies the whole <see cref="Chunk"/> (with all its entities and components) or a part from it to the another <see cref="Chunk"/>.
@@ -433,11 +620,11 @@ public partial struct Chunk
     internal int Transfer(int index, ref Chunk chunk)
     {
         // Get last entity
-        var lastIndex = chunk.Size - 1;
+        var lastIndex = chunk.Count - 1;
         var lastEntity = chunk.Entity(lastIndex);
 
         // Replace index entity with the last entity from the other chunk
-        Entities[index] = lastEntity;
+        Entity(index) = lastEntity;
         for (var i = 0; i < Components.Length; i++)
         {
             var sourceArray = chunk.Components[i];
@@ -445,40 +632,7 @@ public partial struct Chunk
             Array.Copy(sourceArray, lastIndex, desArray, index, 1);
         }
 
-        chunk.Size--;
+        chunk.Count--;
         return lastEntity.Id;
     }
-
-    /*
-    /// <summary>
-    ///     Transfers an <see cref="Arch.Core.Entity"/> at the index of this chunk to another chunk.
-    /// </summary>
-    /// <param name="index">The index of the <see cref="Arch.Core.Entity"/> we want to copy.</param>
-    /// <param name="chunk">The <see cref="Chunk"/> we want to transfer it to.</param>
-    /// <returns></returns>
-    [Pure]
-    internal int CoolerTransfer(int index, ref Chunk chunk)
-    {
-        var chunkSize = chunk.Size;
-        var chunkComponents = chunk.Components;
-        var chunkEntities = chunk.Entities;
-        var components = Components;
-        var entities = Entities;
-
-        // Get last entity
-        var lastIndex = chunkSize - 1;
-        var lastEntity = chunkEntities[lastIndex];
-
-        // Replace index entity with the last entity from the other chunk
-        entities[index] = lastEntity;
-        for (var i = 0; i < components.Length; i++)
-        {
-            var sourceArray = chunkComponents[i];
-            var desArray = components[i];
-            Array.Copy(sourceArray, lastIndex, desArray, index, 1);
-        }
-
-        //chunk.Size = chunkSize - 1;
-        return lastEntity.Id;
-    }*/
 }

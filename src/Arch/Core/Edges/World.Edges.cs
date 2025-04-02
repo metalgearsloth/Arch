@@ -20,7 +20,8 @@ public partial class World
 
         if (!oldArchetype.HasAddEdge(edgeIndex))
         {
-            archetype = GetOrCreate(oldArchetype.Types.Add(type));
+            var newSignature = Signature.Add(oldArchetype.Signature, type);
+            archetype = GetOrCreate(newSignature);
             oldArchetype.AddAddEdge(edgeIndex, archetype);
         }
         else
@@ -45,7 +46,8 @@ public partial class World
 
         if (!oldArchetype.HasRemoveEdge(edgeIndex))
         {
-            archetype = GetOrCreate(oldArchetype.Types.Remove(type));
+            var newSignature = Signature.Remove(oldArchetype.Signature, type);
+            archetype = GetOrCreate(newSignature);
             oldArchetype.AddRemoveEdge(edgeIndex, archetype);
         }
         else

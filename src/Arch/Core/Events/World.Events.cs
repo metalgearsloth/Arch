@@ -143,6 +143,7 @@ public partial class World
     ///     Calls all handlers subscribed to entity creation.
     /// </summary>
     /// <param name="entity">The entity that got created.</param>
+
     public void OnEntityCreated(Entity entity)
     {
 #if EVENTS
@@ -170,6 +171,7 @@ public partial class World
     ///     Calls all handlers subscribed to entity deletion.
     /// </summary>
     /// <param name="entity">The entity that got destroyed.</param>
+
     public void OnEntityDestroyed(Entity entity)
     {
 #if EVENTS
@@ -197,6 +199,7 @@ public partial class World
     /// </summary>
     /// <param name="entity">The entity that the component was added to.</param>
     /// <typeparam name="T">The type of component that got added.</typeparam>
+
     public void OnComponentAdded<T>(Entity entity)
     {
 #if EVENTS
@@ -227,6 +230,7 @@ public partial class World
     /// </summary>
     /// <param name="entity">The entity that the component was set on.</param>
     /// <typeparam name="T">The type of component that got set.</typeparam>
+
     public void OnComponentSet<T>(Entity entity)
     {
 #if EVENTS
@@ -257,6 +261,7 @@ public partial class World
     /// </summary>
     /// <param name="entity">The entity that the component was removed from.</param>
     /// <typeparam name="T">The type of component that got removed.</typeparam>
+
     public void OnComponentRemoved<T>(Entity entity)
     {
 #if EVENTS
@@ -287,6 +292,7 @@ public partial class World
     /// </summary>
     /// <param name="entity">The entity that the component was added to.</param>
     /// <param name="compType">The type of component that got added.</param>
+
     public void OnComponentAdded(Entity entity, ComponentType compType)
     {
 #if EVENTS
@@ -320,6 +326,7 @@ public partial class World
     /// </summary>
     /// <param name="entity">The entity that the component was set on.</param>
     /// <param name="comp">The component instance that got set.</param>
+
     public void OnComponentSet(Entity entity, object comp)
     {
 #if EVENTS
@@ -353,6 +360,7 @@ public partial class World
     /// </summary>
     /// <param name="entity">The entity that the component was removed from.</param>
     /// <param name="compType">The type of component that got removed.</param>
+
     public void OnComponentRemoved(Entity entity, ComponentType compType)
     {
 #if EVENTS
@@ -386,6 +394,7 @@ public partial class World
     /// </summary>
     /// <param name="archetype">The <see cref="Archetype"/>.</param>
     /// <typeparam name="T">The component type.</typeparam>
+
     internal void OnComponentAdded<T>(Archetype archetype)
     {
 #if EVENTS
@@ -407,6 +416,7 @@ public partial class World
     /// </summary>
     /// <param name="archetype">The <see cref="Archetype"/>.</param>
     /// <typeparam name="T">The component type.</typeparam>
+
     internal void OnComponentRemoved<T>(Archetype archetype)
     {
 #if EVENTS
@@ -428,6 +438,7 @@ public partial class World
     /// </summary>
     /// <typeparam name="T">The type of component to get handlers for.</typeparam>
     /// <returns>All handlers for the given component type.</returns>
+
     private ref readonly Events<T> GetEvents<T>()
     {
         var index = EventType<T>.Id;
@@ -457,9 +468,10 @@ public partial class World
     /// </summary>
     /// <param name="compType">The type of component to get handlers for.</param>
     /// <returns>All handlers for the given component type, or null if there are none.</returns>
+
     private Events.Events? GetEvents(ComponentType compType)
     {
-        // Try to get the event from the registry, otherwhise return a null ref since there's none
+        // Try to get the event from the registry, otherwise return a null ref since there's none
         // This is thread-safe due to ConcurrentDictionary.
         if (!EventTypeRegistry.EventIds.TryGetValue(compType, out var index))
         {

@@ -31,8 +31,10 @@ public partial class Archetype
     /// </summary>
     /// <param name="index">The index.</param>
     /// <param name="archetype">The <see cref="Archetype"/>.</param>
+
     internal void AddAddEdge(int index, Archetype archetype)
     {
+        _addEdges.EnsureCapacity(index);
         _addEdges.Add(index, archetype);
     }
 
@@ -41,8 +43,10 @@ public partial class Archetype
     /// </summary>
     /// <param name="index">The index.</param>
     /// <param name="archetype">The <see cref="Archetype"/>.</param>
+
     internal void AddRemoveEdge(int index, Archetype archetype)
     {
+        _removeEdges.EnsureCapacity(index);
         _removeEdges.Add(index, archetype);
     }
 
@@ -51,6 +55,7 @@ public partial class Archetype
     /// </summary>
     /// <param name="index">The index.</param>
     /// <returns>True or false.</returns>
+
     internal bool HasAddEdge(int index)
     {
         return _addEdges.ContainsKey(index);
@@ -61,6 +66,7 @@ public partial class Archetype
     /// </summary>
     /// <param name="index">The index.</param>
     /// <returns>True or false.</returns>
+
     internal bool HasRemoveEdge(int index)
     {
         return _removeEdges.ContainsKey(index);
@@ -74,6 +80,7 @@ public partial class Archetype
     ///     The index of the archetype in the cache, <see cref="ComponentType.Id"/> - 1
     /// </param>
     /// <returns>The cached archetype if it exists, null otherwise.</returns>
+
     internal Archetype GetAddEdge(int index)
     {
         return _addEdges[index];
@@ -87,6 +94,7 @@ public partial class Archetype
     ///     The index of the archetype in the cache, <see cref="ComponentType.Id"/> - 1
     /// </param>
     /// <returns>The cached archetype if it exists, null otherwise.</returns>
+
     internal Archetype GetRemoveEdge(int index)
     {
         return _removeEdges[index];
@@ -97,6 +105,7 @@ public partial class Archetype
     ///     Removes an Edge at the given index.
     /// </summary>
     /// <param name="index">The index of the archetype in the cache, <see cref="ComponentType.Id"/> - 1</param>
+
     internal void RemoveAddEdge(int index)
     {
         _addEdges.Remove(index);
@@ -106,6 +115,7 @@ public partial class Archetype
     ///     Removes an Edge at the given index.
     /// </summary>
     /// <param name="index">The index of the archetype in the cache, <see cref="ComponentType.Id"/> - 1</param>
+
     internal void RemoveRemoveEdge(int index)
     {
         _removeEdges.Remove(index);
@@ -115,6 +125,7 @@ public partial class Archetype
     ///     Removes an edge for a certain <see cref="Archetype"/>.
     /// </summary>
     /// <param name="archetype">The <see cref="Archetype"/> to remove edges for.</param>
+
     internal void RemoveEdge(Archetype archetype)
     {
         for (var index = 0; index < _addEdges.Buckets; index++)

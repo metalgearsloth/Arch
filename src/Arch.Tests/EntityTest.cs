@@ -23,7 +23,7 @@ public sealed partial class EntityTest
     }
 
     private World _world;
-    private readonly ComponentType[] _group = { typeof(Transform), typeof(Rotation) };
+    private readonly ComponentType[] _group = [typeof(Transform), typeof(Rotation)];
     private Entity _entity;
 
     /// <summary>
@@ -132,14 +132,14 @@ public partial class EntityTest
         using var world = World.Create();
         var entity = world.Create();
 
-        entity.AddRange(new List<ComponentType>{typeof(Transform),  typeof(Rotation)});
-        That(entity.HasRange(typeof(Transform), typeof(Rotation)));
+        entity.AddRange(new ComponentType[]{typeof(Transform),  typeof(Rotation)});
+        That(entity.HasRange(new ComponentType[]{typeof(Transform), typeof(Rotation)}));
 
-        entity.RemoveRange(typeof(Transform), typeof(Rotation));
-        That(!entity.HasRange(typeof(Transform), typeof(Rotation)));
+        entity.RemoveRange(new ComponentType[]{typeof(Transform), typeof(Rotation)});
+        That(!entity.HasRange(new ComponentType[]{ typeof(Transform), typeof(Rotation)}));
 
-        entity.AddRange(new Transform(), new Rotation());
-        That(entity.HasRange(typeof(Transform), typeof(Rotation)));
+        entity.AddRange(new object[]{ new Transform(), new Rotation()});
+        That(entity.HasRange(new ComponentType[]{ typeof(Transform), typeof(Rotation)}));
     }
 }
 

@@ -43,7 +43,8 @@ public ref struct Enumerator<T>
     /// <summary>
     ///     Moves to the next item.
     /// </summary>
-    /// <returns>True if there still items, otherwhise false.</returns>
+    /// <returns>True if there still items, otherwise false.</returns>
+
     public bool MoveNext()
     {
         return unchecked(--_index) >= 0;
@@ -52,6 +53,7 @@ public ref struct Enumerator<T>
     /// <summary>
     ///     Resets this instance.
     /// </summary>
+
     public void Reset()
     {
         _index = _length;
@@ -62,7 +64,8 @@ public ref struct Enumerator<T>
     /// </summary>
     public readonly ref T Current
     {
-            get
+
+        get
         {
 
 #if NET7_0_OR_GREATER
@@ -84,27 +87,25 @@ public ref struct Enumerator<T>
 [SkipLocalsInit]
 public ref struct QueryArchetypeEnumerator
 {
-    private readonly Query _query;
     private Enumerator<Archetype> _archetypes;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="QueryArchetypeEnumerator"/> struct.
     /// </summary>
-    /// <param name="query">The <see cref="Query"/> which contains a description and tells which <see cref="Archetype"/>'s fit.</param>
     /// <param name="archetypes">A <see cref="Span{T}"/> of <see cref="Archetype"/>'s which are checked using the <see cref="Query"/>.</param>
-    public QueryArchetypeEnumerator(Query query, Span<Archetype> archetypes)
+    public QueryArchetypeEnumerator(Span<Archetype> archetypes)
     {
-        _query = query;
         _archetypes = new Enumerator<Archetype>(archetypes);
     }
 
     /// <summary>
     ///     Moves to the next <see cref="Archetype"/>.
     /// </summary>
-    /// <returns>True if theres a next <see cref="Archetype"/>, otherwhise false.</returns>
+    /// <returns>True if theres a next <see cref="Archetype"/>, otherwise false.</returns>
     [SkipLocalsInit]
     public bool MoveNext()
     {
+        // Caching query locally for less lookups, improved speed
         while (_archetypes.MoveNext())
         {
             var archetype = _archetypes.Current;
@@ -132,7 +133,7 @@ public ref struct QueryArchetypeEnumerator
     public readonly Archetype Current
     {
         [SkipLocalsInit]
-            get => _archetypes.Current;
+        get => _archetypes.Current;
     }
 }
 
@@ -143,17 +144,14 @@ public ref struct QueryArchetypeEnumerator
 [SkipLocalsInit]
 public readonly ref struct QueryArchetypeIterator
 {
-    private readonly Query _query;
     private readonly Span<Archetype> _archetypes;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="QueryArchetypeIterator"/> struct.
     /// </summary>
-    /// <param name="query">The <see cref="Query"/> each <see cref="QueryArchetypeEnumerator"/> will use.</param>
     /// <param name="archetypes">The <see cref="Archetype"/>'s each <see cref="QueryArchetypeEnumerator"/> will use.</param>
-    public QueryArchetypeIterator(Query query, Span<Archetype> archetypes)
+    public QueryArchetypeIterator(Span<Archetype> archetypes)
     {
-        _query = query;
         _archetypes = archetypes;
     }
 
@@ -164,7 +162,7 @@ public readonly ref struct QueryArchetypeIterator
     [SkipLocalsInit]
     public QueryArchetypeEnumerator GetEnumerator()
     {
-        return new QueryArchetypeEnumerator(_query, _archetypes);
+        return new QueryArchetypeEnumerator(_archetypes);
     }
 }
 
@@ -181,31 +179,30 @@ public ref struct QueryChunkEnumerator
     /// <summary>
     ///     Initializes a new instance of the <see cref="QueryChunkEnumerator"/> struct.
     /// </summary>
-    /// <param name="query">The <see cref="Query"/> which contains a description and tells which <see cref="Chunk"/>'s fit.</param>
     /// <param name="archetypes">A <see cref="Span{T}"/> of <see cref="Archetype"/>'s which <see cref="Chunk"/>'s are checked using the <see cref="Query"/>.</param>
     [SkipLocalsInit]
-    public QueryChunkEnumerator(Query query, Span<Archetype> archetypes)
+    public QueryChunkEnumerator(Span<Archetype> archetypes)
     {
-        _archetypeEnumerator = new QueryArchetypeEnumerator(query, archetypes);
+        _archetypeEnumerator = new QueryArchetypeEnumerator(archetypes);
 
-        // Make it move once, otherwhise we can not check directly for Current.Size which results in bad behaviour
+        // Make it move once, otherwise we can not check directly for Current.Size which results in bad behaviour
         if (_archetypeEnumerator.MoveNext())
         {
-            _index = _archetypeEnumerator.Current.ChunkCount;
+            _index = _archetypeEnumerator.Current.Count+1;
         }
     }
 
     /// <summary>
     ///     Moves to the next <see cref="Chunk"/>.
     /// </summary>
-    /// <returns>True if theres a next <see cref="Chunk"/>, otherwhise false.</returns>
+    /// <returns>True if theres a next <see cref="Chunk"/>, otherwise false.</returns>
     [SkipLocalsInit]
     public bool MoveNext()
     {
         unchecked
         {
-            // Decrease chunk till its zero, skip empty chunks -> otherwhise entity query might fail since it tries to acess that chunk
-            if (--_index >= 0 && Current.Size > 0)
+            // Decrease chunk till its zero, skip empty chunks -> otherwise entity query might fail since it tries to acess that chunk
+            if (--_index >= 0)
             {
                 return true;
             }
@@ -216,7 +213,7 @@ public ref struct QueryChunkEnumerator
                 return false;
             }
 
-            _index = _archetypeEnumerator.Current.ChunkCount-1;
+            _index = _archetypeEnumerator.Current.Count;
             return true;
         }
     }
@@ -230,10 +227,10 @@ public ref struct QueryChunkEnumerator
         _index = -1;
         _archetypeEnumerator.Reset();
 
-        // Make it move once, otherwhise we can not check directly for Current.Size which results in bad behaviour
+        // Make it move once, otherwise we can not check directly for Current.Size which results in bad behaviour
         if (_archetypeEnumerator.MoveNext())
         {
-            _index = _archetypeEnumerator.Current.ChunkCount;
+            _index = _archetypeEnumerator.Current.Count + 1;
         }
     }
 
@@ -243,7 +240,7 @@ public ref struct QueryChunkEnumerator
     public readonly ref Chunk Current
     {
         [SkipLocalsInit]
-            get => ref _archetypeEnumerator.Current.GetChunk(_index);
+        get => ref _archetypeEnumerator.Current.GetChunk(_index);
     }
 }
 
@@ -254,18 +251,15 @@ public ref struct QueryChunkEnumerator
 [SkipLocalsInit]
 public readonly ref struct QueryChunkIterator
 {
-    private readonly Query _query;
     private readonly Span<Archetype> _archetypes;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="QueryChunkIterator"/> struct
     /// </summary>
-    /// <param name="query">The <see cref="Query"/> each <see cref="QueryChunkEnumerator"/> will use.</param>
     /// <param name="archetypes">The <see cref="Archetype"/>'s each <see cref="QueryChunkEnumerator"/> will use.</param>
     [SkipLocalsInit]
-    public QueryChunkIterator(Query query, Span<Archetype> archetypes)
+    public QueryChunkIterator(Span<Archetype> archetypes)
     {
-        _query = query;
         _archetypes = archetypes;
     }
 
@@ -276,7 +270,7 @@ public readonly ref struct QueryChunkIterator
     [SkipLocalsInit]
     public QueryChunkEnumerator GetEnumerator()
     {
-        return new QueryChunkEnumerator(_query, _archetypes);
+        return new QueryChunkEnumerator(_archetypes);
     }
 }
 
@@ -309,7 +303,7 @@ public ref struct ChunkRangeEnumerator
     /// <summary>
     ///     Moves to the next <see cref="Chunk"/>.
     /// </summary>
-    /// <returns>True if theres a next <see cref="Chunk"/>, otherwhise false.</returns>
+    /// <returns>True if theres a next <see cref="Chunk"/>, otherwise false.</returns>
     [SkipLocalsInit]
     public bool MoveNext()
     {
@@ -335,7 +329,8 @@ public ref struct ChunkRangeEnumerator
     public readonly ref Chunk Current
     {
         [SkipLocalsInit]
-            get => ref _archetype.GetChunk(_chunkIndex);
+
+        get => ref _archetype.GetChunk(_chunkIndex);
     }
 }
 
@@ -389,7 +384,7 @@ public ref struct EntityEnumerator
     /// <summary>
     ///     Moves to the next <see cref="Entity"/>.
     /// </summary>
-    /// <returns>True if theres a next <see cref="Entity"/>, otherwhise false.</returns>
+    /// <returns>True if theres a next <see cref="Entity"/>, otherwise false.</returns>
     public bool MoveNext()
     {
         return unchecked(--_index >= 0);
@@ -408,7 +403,7 @@ public ref struct EntityEnumerator
     /// </summary>
     public int Current
     {
-            get => _index;
+        get => _index;
     }
 }
 
@@ -537,6 +532,7 @@ public readonly ref struct RangePartitioner
     ///     Returns a new instance of a <see cref="RangeEnumerator"/>.
     /// </summary>
     /// <returns>A new <see cref="RangeEnumerator"/>.</returns>
+
     public RangeEnumerator GetEnumerator()
     {
         return new RangeEnumerator(_threads, _size);
