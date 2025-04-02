@@ -33,7 +33,7 @@ public class Chunks
     /// <summary>
     ///     All used <see cref="Chunk"/>s in an <see cref="Array{T}"/>.
     /// </summary>
-    private Array<Chunk> Items { get; set; }
+    private Chunk[] Items { get; set; }
 
     /// <summary>
     ///     The number of allocated <see cref="Chunk"/>s in the <see cref="Items"/>.
@@ -67,8 +67,8 @@ public class Chunks
         }
 
         var sourceArray = Items;
-        var destinationArray = (Array<Chunk>)ArrayPool<Chunk>.Shared.Rent(newCapacity);
-        Arch.LowLevel.Array.Copy(ref sourceArray, 0, ref destinationArray, 0, Capacity );
+        var destinationArray = ArrayPool<Chunk>.Shared.Rent(newCapacity);
+        Array.Copy(sourceArray, destinationArray, Count);
         ArrayPool<Chunk>.Shared.Return(sourceArray, true);
 
         Items = destinationArray;
