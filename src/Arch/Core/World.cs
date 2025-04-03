@@ -373,6 +373,12 @@ public partial class World : IDisposable
     [StructuralChange]
     public void Destroy(Entity entity)
     {
+        var entityInfo = EntityInfo[entity.Id];
+
+        // Ref already removed
+        if (entityInfo.Version != entity.Version)
+            return;
+
         #if EVENTS
         // Raise the OnComponentRemoved event for each component on the entity.
         var arch = GetArchetype(entity);
@@ -385,7 +391,6 @@ public partial class World : IDisposable
         OnEntityDestroyed(entity);
 
         // Remove from archetype and move other entity to replace its slot
-        var entityInfo = EntityInfo[entity.Id];
         entityInfo.Archetype.Remove(entityInfo.Slot, out var movedEntityId);
         EntityInfo.Move(movedEntityId, entityInfo.Slot);
 
@@ -987,7 +992,7 @@ public partial class World
         {
             GetOrCreateNextEntity(out var entity);
             entities[index] = entity;
-            entityData[index] = new EntityData(archetype, slots[index]);
+            entityData[index] = new EntityData(archetype, slots[index], entity.Version);
         }
     }
 
@@ -1072,6 +1077,7 @@ public partial class World
     public void Set<T>(Entity entity, in T? component = default)
     {
         var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
+        Debug.Assert(entitySlot.Version == entity.Version);
         var slot = entitySlot.Slot;
         var archetype = entitySlot.Archetype;
         archetype.Set(ref slot, in component);
@@ -1103,6 +1109,7 @@ public partial class World
     public ref T Get<T>(Entity entity)
     {
         var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
+        Debug.Assert(entitySlot.Version == entity.Version);
         var slot = entitySlot.Slot;
         var archetype = entitySlot.Archetype;
         return ref archetype.Get<T>(ref slot);
@@ -1123,6 +1130,12 @@ public partial class World
         component = default;
 
         var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
+
+        if (entitySlot.Version != entity.Version)
+        {
+            return false;
+        }
+
         var slot = entitySlot.Slot;
         var archetype = entitySlot.Archetype;
 
@@ -1149,6 +1162,13 @@ public partial class World
         var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
         var slot = entitySlot.Slot;
         var archetype = entitySlot.Archetype;
+        var version = entitySlot.Version;
+
+        if (version != entity.Version)
+        {
+            exists = false;
+            return ref Unsafe.NullRef<T>();
+        }
 
         if (!(exists = archetype.Has<T>()))
         {
@@ -1279,6 +1299,7 @@ public partial class World
     public void Set(Entity entity, object component)
     {
         var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
+        Debug.Assert(entitySlot.Version == entity.Version);
         entitySlot.Archetype.Set(ref entitySlot.Slot, component);
         OnComponentSet(entity, component);
     }
@@ -1292,6 +1313,8 @@ public partial class World
     public void SetRange(Entity entity, Span<object> components)
     {
         var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
+        Debug.Assert(entitySlot.Version == entity.Version);
+
         foreach (var cmp in components)
         {
             entitySlot.Archetype.Set(ref entitySlot.Slot, cmp);
@@ -1346,6 +1369,8 @@ public partial class World
     public object? Get(Entity entity, ComponentType type)
     {
         var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
+        Debug.Assert(entity.Version == entitySlot.Version);
+
         return entitySlot.Archetype.Get(ref entitySlot.Slot, type);
     }
 
@@ -1360,6 +1385,8 @@ public partial class World
     public object?[] GetRange(Entity entity, Span<ComponentType> types)
     {
         var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
+        Debug.Assert(entitySlot.Version == entity.Version);
+
         var array = new object?[types.Length];
         for (var index = 0; index < types.Length; index++)
         {
@@ -1380,6 +1407,8 @@ public partial class World
     public void GetRange(Entity entity, Span<ComponentType> types, Span<object?> components)
     {
         var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
+        Debug.Assert(entity.Version == entitySlot.Version);
+
         for (var index = 0; index < types.Length; index++)
         {
             var type = types[index];
@@ -1400,12 +1429,18 @@ public partial class World
     public bool TryGet(Entity entity, ComponentType type, out object? component)
     {
         component = default;
-        if (!Has(entity, type))
+        var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
+
+        if (entitySlot.Version == entity.Version)
         {
             return false;
         }
 
-        var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
+        if (!entitySlot.Archetype.Has(type))
+        {
+            return false;
+        }
+
         component = entitySlot.Archetype.Get(ref entitySlot.Slot, type);
         return true;
     }
@@ -1636,6 +1671,7 @@ public partial class World
     public ref readonly Chunk GetChunk(Entity entity)
     {
         var entityInfo = EntityInfo.GetEntitySlot(entity.Id);
+        Debug.Assert(entityInfo.Version == entity.Version);
         return ref entityInfo.Archetype.GetChunk(entityInfo.Slot.ChunkIndex);
     }
 
@@ -1662,6 +1698,7 @@ public partial class World
     {
         // Get archetype and chunk.
         var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
+        Debug.Assert(entitySlot.Version == entity.Version);
         var archetype = entitySlot.Archetype;
         ref var chunk = ref archetype.GetChunk(entitySlot.Slot.ChunkIndex);
         var components = chunk.Components;

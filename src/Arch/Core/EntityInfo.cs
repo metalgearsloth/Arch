@@ -28,15 +28,18 @@ public struct EntityData
     /// </summary>
     public Slot Slot;
 
+    public int Version;
+
     /// <summary>
     ///     Initializes a new instance of the <see cref="EntityData"/> struct.
     /// </summary>
     /// <param name="archetype">Its <see cref="Archetype"/>.</param>
     /// <param name="slot">Its <see cref="Slot"/>.</param>
-    public EntityData(Archetype archetype, Slot slot)
+    public EntityData(Archetype archetype, Slot slot, int version)
     {
         Archetype = archetype;
         Slot = slot;
+        Version = version;
     }
 }
 
@@ -61,7 +64,7 @@ internal class EntityInfoStorage
     {
         EntityData = new JaggedArray<EntityData>(
             baseChunkSize / Unsafe.SizeOf<EntityData>(),
-            new EntityData(null!, new Slot(-1,-1)),
+            new EntityData(null!, new Slot(-1,-1), Entity.Null.Version),
             capacity
         );
     }
@@ -72,9 +75,9 @@ internal class EntityInfoStorage
     /// <param name="id">The <see cref="Entity"/> id.</param>
     /// <param name="archetype">Its <see cref="Archetype"/>.</param>
     /// <param name="slot">Its <see cref="Slot"/>.</param>
-    public void Add(int id, Archetype archetype, Slot slot)
+    public void Add(Entity entity, Archetype archetype, Slot slot)
     {
-        EntityData.Add(id,new EntityData(archetype, slot));
+        EntityData.Add(entity.Id, new EntityData(archetype, slot, entity.Version));
     }
 
     /// <summary>
