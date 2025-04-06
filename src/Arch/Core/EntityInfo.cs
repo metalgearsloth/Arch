@@ -117,6 +117,7 @@ internal class EntityInfoStorage
     /// <returns>Its <see cref="Core.EntityData"/>.</returns>
     public EntityData GetEntitySlot(int id)
     {
+        Debug.Assert(id >= 0);
         return EntityData[id];
     }
 
