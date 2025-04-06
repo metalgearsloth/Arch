@@ -322,7 +322,7 @@ public partial class World : IDisposable
         EntityInfo.EnsureCapacity(Capacity);
 
         // Add entity to info storage
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
         OnEntityCreated(entity);
 
 #if EVENTS

@@ -29,11 +29,11 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
-        
+
         return entity;
     }
 
@@ -55,12 +55,12 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
         OnComponentAdded<T1>(entity);
-        
+
         return entity;
     }
 
@@ -82,13 +82,13 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
         OnComponentAdded<T1>(entity);
         OnComponentAdded<T2>(entity);
-        
+
         return entity;
     }
 
@@ -110,14 +110,14 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
         OnComponentAdded<T1>(entity);
         OnComponentAdded<T2>(entity);
         OnComponentAdded<T3>(entity);
-        
+
         return entity;
     }
 
@@ -139,7 +139,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -147,7 +147,7 @@ public partial class World
         OnComponentAdded<T2>(entity);
         OnComponentAdded<T3>(entity);
         OnComponentAdded<T4>(entity);
-        
+
         return entity;
     }
 
@@ -169,7 +169,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -178,7 +178,7 @@ public partial class World
         OnComponentAdded<T3>(entity);
         OnComponentAdded<T4>(entity);
         OnComponentAdded<T5>(entity);
-        
+
         return entity;
     }
 
@@ -200,7 +200,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -210,7 +210,7 @@ public partial class World
         OnComponentAdded<T4>(entity);
         OnComponentAdded<T5>(entity);
         OnComponentAdded<T6>(entity);
-        
+
         return entity;
     }
 
@@ -232,7 +232,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -243,7 +243,7 @@ public partial class World
         OnComponentAdded<T5>(entity);
         OnComponentAdded<T6>(entity);
         OnComponentAdded<T7>(entity);
-        
+
         return entity;
     }
 
@@ -265,7 +265,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -277,7 +277,7 @@ public partial class World
         OnComponentAdded<T6>(entity);
         OnComponentAdded<T7>(entity);
         OnComponentAdded<T8>(entity);
-        
+
         return entity;
     }
 
@@ -299,7 +299,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -312,7 +312,7 @@ public partial class World
         OnComponentAdded<T7>(entity);
         OnComponentAdded<T8>(entity);
         OnComponentAdded<T9>(entity);
-        
+
         return entity;
     }
 
@@ -334,7 +334,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -348,7 +348,7 @@ public partial class World
         OnComponentAdded<T8>(entity);
         OnComponentAdded<T9>(entity);
         OnComponentAdded<T10>(entity);
-        
+
         return entity;
     }
 
@@ -370,7 +370,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -385,7 +385,7 @@ public partial class World
         OnComponentAdded<T9>(entity);
         OnComponentAdded<T10>(entity);
         OnComponentAdded<T11>(entity);
-        
+
         return entity;
     }
 
@@ -407,7 +407,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -423,7 +423,7 @@ public partial class World
         OnComponentAdded<T10>(entity);
         OnComponentAdded<T11>(entity);
         OnComponentAdded<T12>(entity);
-        
+
         return entity;
     }
 
@@ -445,7 +445,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -462,7 +462,7 @@ public partial class World
         OnComponentAdded<T11>(entity);
         OnComponentAdded<T12>(entity);
         OnComponentAdded<T13>(entity);
-        
+
         return entity;
     }
 
@@ -484,7 +484,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -502,7 +502,7 @@ public partial class World
         OnComponentAdded<T12>(entity);
         OnComponentAdded<T13>(entity);
         OnComponentAdded<T14>(entity);
-        
+
         return entity;
     }
 
@@ -524,7 +524,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -543,7 +543,7 @@ public partial class World
         OnComponentAdded<T13>(entity);
         OnComponentAdded<T14>(entity);
         OnComponentAdded<T15>(entity);
-        
+
         return entity;
     }
 
@@ -565,7 +565,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -585,7 +585,7 @@ public partial class World
         OnComponentAdded<T14>(entity);
         OnComponentAdded<T15>(entity);
         OnComponentAdded<T16>(entity);
-        
+
         return entity;
     }
 
@@ -607,7 +607,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -628,7 +628,7 @@ public partial class World
         OnComponentAdded<T15>(entity);
         OnComponentAdded<T16>(entity);
         OnComponentAdded<T17>(entity);
-        
+
         return entity;
     }
 
@@ -650,7 +650,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -672,7 +672,7 @@ public partial class World
         OnComponentAdded<T16>(entity);
         OnComponentAdded<T17>(entity);
         OnComponentAdded<T18>(entity);
-        
+
         return entity;
     }
 
@@ -694,7 +694,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -717,7 +717,7 @@ public partial class World
         OnComponentAdded<T17>(entity);
         OnComponentAdded<T18>(entity);
         OnComponentAdded<T19>(entity);
-        
+
         return entity;
     }
 
@@ -739,7 +739,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -763,7 +763,7 @@ public partial class World
         OnComponentAdded<T18>(entity);
         OnComponentAdded<T19>(entity);
         OnComponentAdded<T20>(entity);
-        
+
         return entity;
     }
 
@@ -785,7 +785,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -810,7 +810,7 @@ public partial class World
         OnComponentAdded<T19>(entity);
         OnComponentAdded<T20>(entity);
         OnComponentAdded<T21>(entity);
-        
+
         return entity;
     }
 
@@ -832,7 +832,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -858,7 +858,7 @@ public partial class World
         OnComponentAdded<T20>(entity);
         OnComponentAdded<T21>(entity);
         OnComponentAdded<T22>(entity);
-        
+
         return entity;
     }
 
@@ -880,7 +880,7 @@ public partial class World
         EntityInfo.EnsureCapacity(Capacity);
 
         // Map
-        EntityInfo.Add(entity.Id, archetype, slot);
+        EntityInfo.Add(entity, archetype, slot);
 
         OnEntityCreated(entity);
         OnComponentAdded<T0>(entity);
@@ -907,7 +907,7 @@ public partial class World
         OnComponentAdded<T21>(entity);
         OnComponentAdded<T22>(entity);
         OnComponentAdded<T23>(entity);
-        
+
         return entity;
     }
 }
