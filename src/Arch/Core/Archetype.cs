@@ -376,7 +376,7 @@ public sealed partial class Archetype
 
     /// <summary>
     ///     An array which stores the <see cref="Chunk"/>'s.
-    ///     May contain null references since its being pooled, therefore use the <see cref="ChunkCount"/> and <see cref="ChunkCapacity"/> for acessing it.
+    ///     May contain null references since its being pooled, therefore use the <see cref="ChunkCount"/> and <see cref="ChunkCapacity"/> for accessing it.
     /// </summary>
     public Chunks Chunks {  get;  internal set; }
 
@@ -786,7 +786,7 @@ public sealed partial class Archetype
     /// </summary>
     internal void TrimExcess()
     {
-        Chunks.Count = Count; // By setting the Count we will assure that unnecessary chunks are trimmed.
+        Chunks.Count = Count + 1; // By setting the Count we will assure that unnecessary chunks are trimmed.
         Chunks.TrimExcess();
     }
 }

@@ -83,6 +83,9 @@ public class Chunks
         // This always spares one single chunk.
         var minimalSize = Count > 0 ? Count : 1;
 
+        if (minimalSize == Capacity)
+            return;
+
         // Decrease chunk size
         var newChunks = ArrayPool<Chunk>.Shared.Rent(minimalSize);
         Array.Copy(Items, newChunks, minimalSize);
