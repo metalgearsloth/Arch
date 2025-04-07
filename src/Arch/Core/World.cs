@@ -1431,7 +1431,7 @@ public partial class World
         component = default;
         var entitySlot = EntityInfo.GetEntitySlot(entity.Id);
 
-        if (entitySlot.Version == entity.Version)
+        if (entitySlot.Version != entity.Version)
         {
             return false;
         }
