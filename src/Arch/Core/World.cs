@@ -1648,7 +1648,7 @@ public partial class World
     [Pure]
     public bool IsAlive(Entity entity)
     {
-        return entity.Version > 0 && EntityInfo.Has(entity.Id);
+        return entity.Version > 0 && EntityInfo.EntityData.TryGetValue(entity.Id, out EntityData data) && data.Version == entity.Version;
     }
 
     /// <summary>
