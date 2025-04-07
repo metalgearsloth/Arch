@@ -334,6 +334,7 @@ public partial struct Chunk
         {
             var array = components[i];
             Array.Copy(array, lastIndex, array, index, 1);
+            Array.Clear(array, lastIndex, 1);
         }
 
         // Update the mapping.
@@ -350,7 +351,7 @@ public partial struct Chunk
     }
 
     /// <summary>
-    ///     Cleares this <see cref="Chunk"/>, an efficient method to delete all <see cref="Arch.Core.Entity"/>s.
+    ///     Clears this <see cref="Chunk"/>, an efficient method to delete all <see cref="Arch.Core.Entity"/>s.
     ///     Does not dispose any resources nor modifies its <see cref="Capacity"/>.
     /// </summary>
     public void Clear()
@@ -630,6 +631,7 @@ public partial struct Chunk
             var sourceArray = chunk.Components[i];
             var desArray = Components[i];
             Array.Copy(sourceArray, lastIndex, desArray, index, 1);
+            Array.Clear(sourceArray, lastIndex, 1);
         }
 
         chunk.Count--;

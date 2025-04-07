@@ -639,7 +639,7 @@ public sealed partial class Archetype
     }
 
     /// <summary>
-    ///     Cleares this <see cref="Archetype"/>, an efficient method to delete all <see cref="Arch.Core.Entity"/>s.
+    ///     Clears this <see cref="Archetype"/>, an efficient method to delete all <see cref="Arch.Core.Entity"/>s.
     ///     Does not dispose any resources nor modifies its <see cref="ChunkCapacity"/>.
     /// </summary>
     public void Clear()
