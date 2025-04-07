@@ -524,6 +524,26 @@ public partial class World : IDisposable
     }
 
     /// <summary>
+    ///     Searches all matching <see cref="Entity"/>s and puts them into the given <see cref="Span{T}"/>.
+    /// </summary>
+    /// <param name="queryDescription">The <see cref="QueryDescription"/> which specifies the components or <see cref="Entity"/>s for which to search.</param>
+    /// <param name="list">The <see cref="Span{T}"/> receiving the found <see cref="Entity"/>s.</param>
+    public void GetEntities<T>(in QueryDescription queryDescription, T list) where T : IList<Entity>
+    {
+        var query = Query(in queryDescription);
+        foreach (ref var chunk in query)
+        {
+            ref var entityFirstElement = ref chunk.Entity(0);
+
+            foreach (var entityIndex in chunk)
+            {
+                var entity = Unsafe.Add(ref entityFirstElement, entityIndex);
+                list.Add(entity);
+            }
+        }
+    }
+
+    /// <summary>
     ///     Searches all matching <see cref="Archetype"/>s and puts them into the given <see cref="IList{T}"/>.
     /// </summary>
     /// <param name="queryDescription">The <see cref="QueryDescription"/> which specifies the components for which to search.</param>
