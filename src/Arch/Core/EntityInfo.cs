@@ -33,8 +33,6 @@ public struct EntityData
     /// </summary>
     public int Version;
 
-    public int Version;
-
     /// <summary>
     ///     Initializes a new instance of the <see cref="EntityData"/> struct.
     /// </summary>
@@ -78,7 +76,6 @@ public struct EntityData
         Archetype = archetype;
         Slot = slot;
     }
-        Version = version;
 }
 
 /// <summary>

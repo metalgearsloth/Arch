@@ -358,10 +358,10 @@ public partial class World : IDisposable
     [StructuralChange]
     public void Destroy(Entity entity)
     {
-        var entityInfo = EntityInfo[entity.Id];
+        ref var entityData = ref EntityInfo.GetEntityData(entity.Id);
 
         // Ref already removed
-        if (entityInfo.Version != entity.Version)
+        if (entityData.Version != entity.Version)
             return;
 
         #if EVENTS
@@ -376,7 +376,6 @@ public partial class World : IDisposable
         OnEntityDestroyed(entity);
 
         // Remove from archetype and move other entity to replace its slot
-        ref var entityData = ref EntityInfo.GetEntityData(entity.Id);
         entityData.Archetype.Remove(entityData.Slot, out var movedEntityId);
         EntityInfo.Move(movedEntityId, entityData.Slot);
 
@@ -1164,7 +1163,7 @@ public partial class World
     {
     	component = default;
         var slot = EntityInfo.GetEntityData(entity.Id);
-        
+
         if (slot.Version != entity.Version)
         {
         	return false;
@@ -1466,7 +1465,7 @@ public partial class World
     {
     	component = default;
         var slot = EntityInfo.GetEntityData(entity.Id);
-        
+
         if (slot.Version != entity.Version)
         {
         	return false;

@@ -526,7 +526,7 @@ public partial struct QueryDescription : IEquatable<QueryDescription>
 public partial class Query : IEquatable<Query>
 {
     private readonly Archetypes _allArchetypes;
-    private readonly NetStandardList<Archetype> _matchingArchetypes;
+    private readonly PooledList<Archetype> _matchingArchetypes;
     private int _allArchetypesHashCode;
 
     private readonly QueryDescription _queryDescription;
@@ -545,7 +545,7 @@ public partial class Query : IEquatable<Query>
     internal Query(Archetypes allArchetypes, QueryDescription description)
     {
         _allArchetypes = allArchetypes;
-        _matchingArchetypes = new NetStandardList<Archetype>();
+        _matchingArchetypes = new PooledList<Archetype>();
         _allArchetypesHashCode = -1;
 
         Debug.Assert(
@@ -621,7 +621,7 @@ public partial class Query : IEquatable<Query>
     public QueryArchetypeIterator GetArchetypeIterator()
     {
         Match();
-        return new QueryArchetypeIterator(_matchingArchetypes.AsSpan());
+        return new QueryArchetypeIterator(_matchingArchetypes.Span);
     }
 
     /// <summary>
@@ -631,7 +631,7 @@ public partial class Query : IEquatable<Query>
     public QueryChunkIterator GetChunkIterator()
     {
         Match();
-        return new QueryChunkIterator(_matchingArchetypes.AsSpan());
+        return new QueryChunkIterator(_matchingArchetypes.Span);
     }
 
     /// <summary>
@@ -641,7 +641,7 @@ public partial class Query : IEquatable<Query>
     public QueryChunkEnumerator GetEnumerator()
     {
         Match();
-        return new QueryChunkEnumerator(_matchingArchetypes.AsSpan());
+        return new QueryChunkEnumerator(_matchingArchetypes.Span);
     }
 
     /// <summary>
